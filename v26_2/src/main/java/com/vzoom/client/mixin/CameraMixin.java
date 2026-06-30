@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Camera.class)
 public class CameraMixin {
 
-    @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "calculateFov", at = @At("RETURN"), cancellable = true)
     private void vzoom$modifyFov(CallbackInfoReturnable<Float> cir) {
         ZoomState s = ZoomState.INSTANCE;
         cir.setReturnValue((float) s.computeFov(cir.getReturnValue()));
