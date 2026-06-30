@@ -1,0 +1,50 @@
+// v1_21_11 — targets Minecraft 1.21.11. Mojang official mappings, classic
+// (remap) Loom, Java 21, ModMenu 17. Shares the engine from :core.
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version '1.17-SNAPSHOT'
+}
+
+base { archivesName = "vzoom-v1_21_11" }
+
+loom {
+    mods {
+        "vzoom" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.findProperty('mc_1_21_11')}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.findProperty('loader_1_21_11')}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.findProperty('fapi_1_21_11')}"
+    // ModMenu is optional at runtime: compile against it, never force it.
+    modCompileOnlyApi "com.terraformersmc:modmenu:${rootProject.findProperty('modmenu_1_21_11')}"
+    implementation project(':core')
+}
+
+int jv1_21_11 = Integer.parseInt(rootProject.findProperty('java_1_21_11').toString())
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = jv1_21_11
+}
+
+configurations.configureEach {
+    attributes.attribute(org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, jv1_21_11)
+}
+
+jar {
+    from(project(':core').sourceSets.main.output)
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(jv1_21_11)
+    targetCompatibility = JavaVersion.toVersion(jv1_21_11)
+}

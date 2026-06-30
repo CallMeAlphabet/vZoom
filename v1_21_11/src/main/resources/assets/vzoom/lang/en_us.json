@@ -1,0 +1,62 @@
+{
+  "key.vzoom.zoom": "Zoom",
+  "key.vzoom.zoomIn": "Zoom In (step)",
+  "key.vzoom.zoomOut": "Zoom Out (step)",
+  "key.vzoom.reset": "Reset Zoom",
+  "key.vzoom.reload": "Reload Config",
+  "category.vzoom": "vZoom",
+
+  "vzoom.config.title": "vZoom Settings",
+  "vzoom.config.reset": "Reset to Defaults",
+
+  "vzoom.section.basic": "-- Basic --",
+  "vzoom.section.scroll": "-- Scroll & Easing --",
+  "vzoom.section.range": "-- Zoom Range --",
+  "vzoom.section.look": "-- Look Sensitivity --",
+  "vzoom.section.hud": "-- HUD --",
+  "vzoom.section.autoDisable": "-- Auto-Disable --",
+  "vzoom.section.presets": "-- Presets --",
+
+  "vzoom.config.hud": "Zoom HUD",
+  "vzoom.config.cinematic": "Cinematic Camera",
+  "vzoom.config.retain": "Retain Zoom on Release",
+  "vzoom.config.activation": "Activation Mode",
+  "vzoom.config.doubleTap": "Double-Tap Window (ms)",
+  "vzoom.config.reduceSens": "Reduce Look Sensitivity",
+  "vzoom.config.scaleSensWithZoom": "Scale Sensitivity w/ Zoom",
+  "vzoom.config.invert": "Invert Scroll",
+
+  "vzoom.config.scrollMode": "Scroll Mode",
+  "vzoom.config.easing": "Easing",
+  "vzoom.config.scrollFactor": "Scroll Factor",
+  "vzoom.config.sensitivity": "Scroll Sensitivity",
+  "vzoom.config.smoothing": "Transition Speed",
+  "vzoom.config.linearStep": "Linear Step",
+  "vzoom.config.discreteLevels": "Discrete Levels",
+
+  "vzoom.config.defaultZoom": "Default Zoom",
+  "vzoom.config.minZoom": "Min Zoom",
+  "vzoom.config.maxZoom": "Max Zoom",
+
+  "vzoom.config.sensScale": "Sensitivity Scale",
+  "vzoom.config.sensFloor": "Sensitivity Floor",
+
+  "vzoom.config.hudStyle": "HUD Style",
+  "vzoom.config.hudPosition": "HUD Position",
+  "vzoom.config.hudScale": "HUD Scale",
+  "vzoom.config.hudColor": "HUD Color",
+  "vzoom.config.hudBackground": "HUD Background",
+  "vzoom.config.showFps": "Show FPS",
+  "vzoom.config.showCoords": "Show Target Coordinates",
+  "vzoom.config.showDirection": "Show Facing",
+  "vzoom.config.showTarget": "Show Target Info",
+  "vzoom.config.hudOffsetX": "HUD Offset X",
+  "vzoom.config.hudOffsetY": "HUD Offset Y",
+
+  "vzoom.config.disableSprint": "Disable While Sprinting",
+  "vzoom.config.disableFly": "Disable While Flying",
+  "vzoom.config.disableUse": "Disable While Using Item",
+  "vzoom.config.disableWater": "Disable While Underwater",
+
+  "vzoom.config.preset": "Preset"
+}

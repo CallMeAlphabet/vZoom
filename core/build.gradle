@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+}
+
+// Core is intentionally free of any Minecraft dependency so the exact same
+// bytecode can be embedded inside every version-specific jar. It is compiled
+// down to Java 8 bytecode so it also runs on the oldest target runtime (1.16.5).
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}

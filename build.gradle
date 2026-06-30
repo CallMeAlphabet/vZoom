@@ -1,0 +1,27 @@
+// Root build script.
+// Loom is applied per-subproject (a single Gradle build can carry only one Loom
+// plugin version, but each subproject configures its own Minecraft/mappings/loader).
+plugins {}
+
+allprojects {
+    repositories {
+        maven { url = "https://maven.fabricmc.net" }
+        mavenCentral()
+        maven { url = "https://maven.terraformersmc.com/releases" }
+        gradlePluginPortal()
+    }
+}
+
+subprojects {
+    version = rootProject.findProperty("mod_version")
+    group = rootProject.findProperty("maven_group")
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = "UTF-8"
+        options.deprecation = false
+    }
+
+    tasks.withType(ProcessResources).configureEach {
+        filteringCharset = "UTF-8"
+    }
+}

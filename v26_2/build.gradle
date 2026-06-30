@@ -1,0 +1,56 @@
+// v26_2 — modern (calendar-versioned) target. MC 26.2, Mojang official names,
+// Java 25, ModMenu 20. Uses the SAME engine from :core.
+//
+// In the 26.x era Mojang ships the client jar already deobfuscated in official
+// (Mojang) names, so Fabric Loom no longer needs a "mappings" dependency nor
+// the mod* dependency scopes. Mods are written and run directly in Mojmap.
+plugins {
+    // NoRemap flavour of Loom: 26.x ships the client jar already in official
+    // (Mojang) names, so there is nothing to deobfuscate and no mappings dep.
+    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+}
+
+base { archivesName = "vzoom-v26_2" }
+
+loom {
+    mods {
+        "vzoom" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.findProperty('mc_26_2')}"
+    // No "mappings" line: 26.2 ships already-named (Mojmap) classes.
+    implementation "net.fabricmc:fabric-loader:${rootProject.findProperty('loader_26_2')}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.findProperty('fapi_26_2')}"
+    // Include the key mapping API module explicitly (for NoRemap Loom)
+    implementation "net.fabricmc.fabric-api:fabric-key-mapping-api-v1:2.0.5+e2bdee789e"
+    // ModMenu is optional at runtime: compile against it, never force it.
+    compileOnly "com.terraformersmc:modmenu:${rootProject.findProperty('modmenu_26_2')}"
+    implementation project(':core')
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = Integer.parseInt(rootProject.findProperty('java_26_2').toString())
+}
+
+jar {
+    from(project(':core').sourceSets.main.output)
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(25)
+    targetCompatibility = JavaVersion.toVersion(25)
+}
+
+configurations.configureEach {
+    attributes.attribute(org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
+}
