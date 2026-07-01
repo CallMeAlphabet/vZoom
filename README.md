@@ -31,7 +31,6 @@ assign them if you want them.
 | **Zoom In (step)** | unbound | Zooms in by one notch per press (same as one scroll-up tick). Only does something while zoom is engaged. |
 | **Zoom Out (step)** | unbound | Zooms out by one notch per press. |
 | **Reset Zoom** | unbound | Snaps the zoom value straight back to 1.0 (normal view) without disengaging. |
-| **Next Preset** | unbound | Jumps to the next saved zoom preset. |
 | **Previous Preset** | unbound | Jumps to the previous saved preset. |
 | **Reload Config** | unbound | Re-reads `config/vzoom.json` live — handy if you hand-edit the file. |
 
