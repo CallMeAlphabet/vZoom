@@ -134,32 +134,6 @@ combat or movement.
 | **Disable While Using Item** (`disableWhileUsingItem`) | `false` | No zoom while eating, drawing a bow, blocking, etc. |
 | **Disable While Underwater** (`disableWhileUnderwater`) | `false` | No zoom while submerged. |
 
-### Presets
-
-A preset is a **complete zoom profile**, not just a zoom level. Switching to one
-applies its zoom *and* its easing, scroll mode, scroll factor/sensitivity,
-cinematic camera, look-sensitivity behaviour and HUD style all at once — so
-"Scope" can feel totally different from "Close" even before you scroll. They are
-defined in `config/vzoom.json` (there is no in-game editor for creating/removing
-them). Switching a preset (via the button or the keybinds) is saved
-automatically so the active profile persists.
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **Preset** (screen button) | — | Shows the **currently active** preset as `Preset: <name> (<index>/<count>)`. Clicking it cycles to the next preset; the **Next/Previous Preset** keybinds do the same. |
-| **Presets** (`presets`) *(JSON only)* | see below | Ordered list of profile entries. Each entry carries `{zoom, smoothing, easingMode, scrollMode, scrollFactor, sensitivity, cinematicCamera, reduceSensitivity, scaleSensitivityWithZoom, sensitivityScale, hudStyle, hudEnabled}` plus a `name`. Edit this list in `config/vzoom.json`, then press **Reload Config**. |
-| **Preset Loop** (`presetLoop`) | `true` | If on, cycling past the last preset wraps to the first (and vice-versa). |
-
-The default presets demonstrate how much a profile can change:
-
-| Preset | Zoom | Notable settings |
-| --- | --- | --- |
-| **Close** | 2.0× | Smoothing 18, `SMOOTH` easing |
-| **Standard** | 5.0× | Defaults (geometric, exponential, smoothing 14) |
-| **Far** | 12.0× | Smoothing 12, scroll factor 1.2 |
-| **Spy** | 30.0× | `SMOOTH` easing, smoothing 9, scroll factor 1.25 |
-| **Scope** | 80.0× | `EASE_OUT` easing, `DISCRETE` scroll mode, `PERCENT` HUD, smoothing 6 |
-
 ### Other
 
 | Option | Default | Description |
