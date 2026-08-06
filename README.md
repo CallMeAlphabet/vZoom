@@ -1,13 +1,3 @@
-<img alt="codeberg" height="56" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/codeberg_vector.svg"> <img alt="fabric-api" height="56" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/requires/fabric-api_vector.svg">
-
-### ⚠️ Project Status: Maintenance-Only
-
-This project is now in **maintenance-only mode**.
-
-* **Feature Complete:** No new features will be added.
-* **Updates:** Development is limited to keeping the project compatible with newer versions.
-* **Support:** Issue response times and PR reviews will be slower than usual.
- 
 # vZoom
 
 A feature-rich, smooth cinematic zoom mod for Minecraft (Fabric).
