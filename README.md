@@ -1,144 +1,52 @@
 # vZoom
+vZoom — a feature-rich, smooth cinematic zoom mod for Minecraft Fabric
 
-A feature-rich, smooth cinematic zoom mod for Minecraft (Fabric).
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Controls](#controls)
+- [Zoom Math](#how-the-zoom-math-works)
+- [Edit Configuration](#edit-configuration)
+- [Note](#note)
+- [Manually Building](#manually-building)
 
-Hold the zoom key (default `C`) and scroll the mouse wheel to dial the zoom in
-and out with effectively unlimited range, with look-sensitivity reduction,
-saveable zoom profiles, and a configurable info HUD — all from one
-version-independent engine that ships for two Minecraft targets.
 
-## Targets
+## Quick Start
 
-vZoom is built around a shared, version-independent engine in `:core`. The same
-engine drives two targets:
-
-- `v1_21_11` — Minecraft 1.21.11 (Mojang mappings, remap Loom, Java 21)
-- `v26_2` — Minecraft 26.2 (Mojang names, NoRemap Loom, Java 25)
-
-Both behave identically; only the low-level rendering / keybind glue differs.
+Hold the zoom key (default `C`) and scroll the mouse wheel to zoom in / out with an effectively unlimited range.
 
 ## Controls
 
-All keybinds are configurable under **Options → Controls**. The auxiliary
-keybinds default to **unbound** so they never clobber your existing bindings —
-assign them if you want them.
+All keybinds are configurable under `Options → Controls`.
 
 | Action | Default | What it does |
 | --- | --- | --- |
-| **Zoom** | `C` | Engages zoom. How it engages depends on **Activation Mode**. While engaged, scrolling the wheel adjusts the zoom level. |
-| **Zoom In (step)** | unbound | Zooms in by one notch per press (same as one scroll-up tick). Only does something while zoom is engaged. |
-| **Zoom Out (step)** | unbound | Zooms out by one notch per press. |
+| **Zoom** | `C` | Zooms. How it engages depends on the Activation Mode. While zooming, scrolling the wheel adjusts the zoom level. |
+| **Zoom In (step)** | unbound | Zooms in by one level per press (same as one scroll-up tick). Only does something while zoom is engaged. |
+| **Zoom Out (step)** | unbound | Zooms out by one level per press. |
 | **Reset Zoom** | unbound | Snaps the zoom value straight back to 1.0 (normal view) without disengaging. |
 | **Previous Preset** | unbound | Jumps to the previous saved preset. |
-| **Reload Config** | unbound | Re-reads `config/vzoom.json` live — handy if you hand-edit the file. |
+| **Reload Config** | unbound | Re-reads `config/vzoom.json` live. |
 
----
 
-## How the zoom math works (short version)
+## How the zoom math works
 
-- The applied FOV is `vanillaFov / currentZoom`. A zoom of `2.0` halves the FOV
-  (looks 2× closer); `0.5` doubles it (wide-angle "zoom out").
-- By default scrolling uses **geometric** scaling: each notch multiplies the
-  current zoom by `scrollFactor`, so steps feel perceptually uniform and the
-  range is effectively unbounded.
-- The displayed value is the *interpolated* `currentZoom`, which glides toward
-  your scroll target using the chosen easing.
+- The applied FOV is `vanillaFov / currentZoom`. A zoom of `2.0` halves the FOV (looks 2× closer), `0.5` doubles it (wide-angle "zoom out").
+- By default scrolling uses geometric scaling: each level multiplies the current zoom by `scrollFactor`, so steps feel uniform and the range is effectively unbounded.
+- The displayed value is the interpolated `currentZoom`, which glides toward your scroll target using the chosen easing.
 
----
 
-## Config reference
+## Edit Configuration
 
-Open the settings via **Mod Menu** (a suggested, optional dependency), or edit
-`config/vzoom.json` directly and press **Reload Config** in-game. Every option
-below is editable in the settings screen unless marked *(JSON only)*. Booleans
-toggle; numbers use `+`/`-` steppers; enums cycle.
+Open the settings via Mod Menu (a suggested, optional dependency), or edit `config/vzoom.json` directly and press "Reload Config" in-game. Every option is editable in the settings screen.
 
-### Basic
 
-| Option | Default | Description |
-| --- | --- | --- |
-| **Zoom HUD** (`hudEnabled`) | `true` | Master switch for the on-screen zoom indicator. Off hides the readout entirely. |
-| **Cinematic Camera** (`cinematicCamera`) | `true` | Enables Minecraft's vanilla "smooth camera" while zoomed, softening mouse movement for a cinematic feel. |
-| **Retain Zoom on Release** (`retainZoomOnRelease`) | `false` | When on, releasing the zoom key keeps the current zoom level instead of resetting to 1.0. Useful combined with **Toggle** activation. |
-| **Activation Mode** (`activationMode`) | `HOLD` | How the Zoom key engages zoom. `HOLD` = zoom only while held. `TOGGLE` = one press flips zoom on/off. `DOUBLE_TAP` = a quick double-press flips it on/off. |
-| **Double-Tap Window (ms)** (`doubleTapIntervalMs`) | `300` | Max milliseconds between two presses to count as a double-tap (only used in `DOUBLE_TAP` mode). Lower = need faster taps. |
-| **Reduce Look Sensitivity** (`reduceSensitivity`) | `true` | Slows down mouse-look while zoomed so the view doesn't whip around at high zoom. Strongly recommended for aiming. |
-| **Scale Sensitivity w/ Zoom** (`scaleSensitivityWithZoom`) | `true` | If on, the look-slowdown grows with depth (deeper = slower). If off, a fixed factor set by **Sensitivity Scale** is used. |
-| **Invert Scroll** (`invertScroll`) | `false` | Reverses the scroll direction (scroll up = zoom out). |
+## Note
 
-### Scroll & Easing
+Colors are stored as ARGB integers (`0xAARRGGBB`). The settings screen cycles a small palette for the HUD color**, for full control (including the panel color that has no screen control) edit `config/vzoom.json` directly and press "Reload Config".
 
-| Option | Default | Description |
-| --- | --- | --- |
-| **Scroll Mode** (`scrollMode`) | `GEOMETRIC` | How a wheel notch becomes zoom. `GEOMETRIC` multiplies the current zoom (smooth, unlimited range). `LINEAR` adds a fixed amount each notch. `DISCRETE` snaps between a fixed number of evenly-spaced levels (like camera-lens detents). |
-| **Easing** (`easingMode`) | `EXPONENTIAL` | The curve of the zoom transition. `INSTANT` snaps with no glide. `EXPONENTIAL` is the classic fast-then-settle glide. `LINEAR` moves at a constant speed toward the target. `SMOOTH` is a gentle ease-in-out. `EASE_OUT` accelerates then settles softly. |
-| **Scroll Factor** (`scrollFactor`) | `1.15` | Multiplier per notch in `GEOMETRIC` mode. `1.15` ≈ +15% zoom in per notch. Higher = coarser steps. |
-| **Scroll Sensitivity** (`sensitivity`) | `1.0` | Extra multiplier applied to every scroll delta. Higher = faster scrolling overall. |
-| **Transition Speed** (`smoothing`) | `14.0` | Speed of the easing glide (higher = snappier, lower = lazier). |
-| **Linear Step** (`linearStep`) | `1.0` | Zoom amount added/removed per notch in `LINEAR` mode. |
-| **Discrete Levels** (`discreteLevels`) | `16` | Number of evenly spaced detent levels in `DISCRETE` mode. More = finer steps. |
 
-### Zoom Range
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **Default Zoom** (`defaultZoom`) | `5.0` | Zoom multiplier applied the moment you engage zoom (before scrolling). |
-| **Min Zoom** (`minZoom`) | `1.0` | Lower bound on the zoom value. Set below `1.0` (e.g. `0.6`) to allow **wide-angle zoom-out** past the normal FOV. |
-| **Max Zoom** (`maxZoom`) | `4096.0` | Upper bound. Purely a safety cap; raise it for extreme telescope zooms. |
-
-### Look Sensitivity
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **Sensitivity Scale** (`sensitivityScale`) | `0.5` | Fixed look-speed multiplier used when **Scale Sensitivity w/ Zoom** is off. `0.5` = half-speed look while zoomed. |
-| **Sensitivity Floor** (`sensitivityScaleFloor`) | `0.02` | Minimum look-speed multiplier when scaling with zoom, so very deep zoom never freezes the camera entirely. |
-
-### HUD
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **HUD Style** (`hudStyle`) | `TEXT` | Appearance of the indicator. `TEXT` shows `x4.50`. `PERCENT` shows `450%`. `BAR` shows the multiplier plus a horizontal progress bar. `COMPACT` is a compact variant; `MINIMAL` hides the readout. |
-| **HUD Position** (`hudAlign`) | `BOTTOM_RIGHT` | Screen anchor: any corner, any edge center, or dead center. |
-| **HUD Scale** (`hudScale`) | `1.0` | Text size multiplier for the indicator. |
-| **HUD Color** (`hudColor`) | `#FFB14E` | Text color of the main zoom line (cycles a palette in the screen; full ARGB in JSON). |
-| **HUD Background** (`hudBackground`) | `true` | Draws a translucent panel behind the indicator text for readability. |
-| **Show FPS** (`showFps`) | `false` | Adds an `FPS:` line to the indicator. |
-| **Show Target Coordinates** (`showCoordinates`) | `false` | Adds an `XYZ:` line showing the **coordinates of the block (or entity) you are currently looking at** — a long-range raycast, so it works far beyond your normal reach. Omitted if you're looking at the sky. |
-| **Show Facing** (`showDirection`) | `false` | Adds an `8-way compass heading (`Facing: NW` etc.) line. |
-| **Show Target Info** (`showTargetInfo`) | `false` | Adds a line naming what you're looking at (block or entity display name) plus its distance, e.g. `Diamond Ore (62.4m)`. |
-| **HUD Offset X / Y** (`hudOffsetX`, `hudOffsetY`) | `0` | Pixel offsets nudging the indicator from its anchor for fine placement. |
-| **HUD Background Color** (`hudBackgroundColor`) *(JSON only)* | `#66000000` | ARGB color of the indicator panel. |
-
-### Auto-Disable
-
-Each of these, when on, forces zoom off while that condition is true (the key
-can still be held; it just won't engage). Handy to stop zoom fighting with
-combat or movement.
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **Disable While Sprinting** (`disableWhileSprinting`) | `false` | No zoom while sprinting. |
-| **Disable While Flying** (`disableWhileFlying`) | `false` | No zoom while creative flying or gliding with an elytra. |
-| **Disable While Using Item** (`disableWhileUsingItem`) | `false` | No zoom while eating, drawing a bow, blocking, etc. |
-| **Disable While Underwater** (`disableWhileUnderwater`) | `false` | No zoom while submerged. |
-
-### Other
-
-| Option | Default | Description |
-| --- | --- | --- |
-| **Default Key** (`defaultKey`) | `67` (`C`) | The GLFW keycode the Zoom keybind binds on first launch. Change it in Controls afterward. |
-
----
-
-## A note on colors
-
-Colors are stored as ARGB integers (`0xAARRGGBB`). The settings screen cycles a
-small palette for **HUD Color**; for full control (including the panel color that
-has no screen control) edit `config/vzoom.json` directly and press
-**Reload Config**.
-
-## Building
+## Manually Building
 
     ./gradlew build
 
-Jars are output under `v1_21_11/build/libs/` and `v26_2/build/libs/`.
+Jars are output under `v[version]/build/libs/`
