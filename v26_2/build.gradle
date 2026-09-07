@@ -1,12 +1,23 @@
-// v26_2 — modern (calendar-versioned) target. MC 26.2, Mojang official names,
-// Java 25, ModMenu 20. Uses the SAME engine from :core.
-//
-// In the 26.x era Mojang ships the client jar already deobfuscated in official
-// (Mojang) names, so Fabric Loom no longer needs a "mappings" dependency nor
-// the mod* dependency scopes. Mods are written and run directly in Mojmap.
+/*
+ * Copyright 2026 CallMeAlphabet (ItzAlphabet)
+ * Copyright 2026 Vextoly
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// v26_2 uses NoRemap Loom: MC 26.x ships the client jar already in official
+// (Mojang) names, so there is nothing to deobfuscate and no mappings dep.
 plugins {
-    // NoRemap flavour of Loom: 26.x ships the client jar already in official
-    // (Mojang) names, so there is nothing to deobfuscate and no mappings dep.
     id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
 }
 
@@ -21,14 +32,10 @@ loom {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.findProperty('mc_26_2')}"
-    // No "mappings" line: 26.2 ships already-named (Mojmap) classes.
-    implementation "net.fabricmc:fabric-loader:${rootProject.findProperty('loader_26_2')}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.findProperty('fapi_26_2')}"
-    // Include the key mapping API module explicitly (for NoRemap Loom)
-    implementation "net.fabricmc.fabric-api:fabric-key-mapping-api-v1:2.0.5+e2bdee789e"
-    // ModMenu is optional at runtime: compile against it, never force it.
-    compileOnly "com.terraformersmc:modmenu:${rootProject.findProperty('modmenu_26_2')}"
+    minecraft "com.mojang:minecraft:${rootProject.findProperty('mc_v26_2')}"
+    implementation "net.fabricmc:fabric-loader:${rootProject.findProperty('loader_v26_2')}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.findProperty('fapi_v26_2')}"
+    compileOnly "com.terraformersmc:modmenu:${rootProject.findProperty('modmenu_v26_2')}"
     implementation project(':core')
 }
 
@@ -37,9 +44,11 @@ processResources {
     filesMatching("fabric.mod.json") { expand "version": project.version }
 }
 
+int jv = Integer.parseInt(rootProject.findProperty('java_v26_2').toString())
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
-    options.release = Integer.parseInt(rootProject.findProperty('java_26_2').toString())
+    options.release = jv
 }
 
 jar {
@@ -47,10 +56,10 @@ jar {
 }
 
 java {
-    sourceCompatibility = JavaVersion.toVersion(25)
-    targetCompatibility = JavaVersion.toVersion(25)
+    sourceCompatibility = JavaVersion.toVersion(jv)
+    targetCompatibility = JavaVersion.toVersion(jv)
 }
 
 configurations.configureEach {
-    attributes.attribute(org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
+    attributes.attribute(org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, jv)
 }

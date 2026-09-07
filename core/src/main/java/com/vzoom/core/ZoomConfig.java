@@ -1,3 +1,20 @@
+/*
+ * Copyright 2026 CallMeAlphabet (ItzAlphabet)
+ * Copyright 2026 Vextoly
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.vzoom.core;
 
 /**
@@ -77,14 +94,8 @@ public final class ZoomConfig {
     /** Default zoom multiplier when activating zoom. */
     public double defaultZoom = 5.0;
 
-    /**
-     * Lower bound on the zoom factor. Values below 1.0 enable "zoom out"
-     * (wide-angle) when scrolled past normal.
-     */
+    /** Lower bound on the zoom factor. Values below 1.0 enable wide-angle zoom out. */
     public double minZoom = 1.0;
-
-    /** Upper bound on the zoom factor. */
-    public double maxZoom = 4096.0;
 
     // ------------------------------------------------------------------
     // HUD
@@ -161,7 +172,6 @@ public final class ZoomConfig {
         if (sensitivityScaleFloor <= 0.0) sensitivityScaleFloor = 0.02;
         if (defaultZoom < 0.0) defaultZoom = 5.0;
         if (minZoom < 0.05) minZoom = 1.0;
-        if (maxZoom < minZoom) maxZoom = Math.max(minZoom + 1.0, 4096.0);
         if (easingMode == null) easingMode = EasingMode.EXPONENTIAL;
         if (scrollMode == null) scrollMode = ScrollMode.GEOMETRIC;
         if (hudAlign == null) hudAlign = HudAlign.BOTTOM_RIGHT;
@@ -192,7 +202,6 @@ public final class ZoomConfig {
 
         this.defaultZoom = other.defaultZoom;
         this.minZoom = other.minZoom;
-        this.maxZoom = other.maxZoom;
 
         this.hudEnabled = other.hudEnabled;
         this.hudStyle = other.hudStyle;

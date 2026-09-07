@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "vzoom",
+  "version": "${version}",
+  "name": "vZoom",
+  "description": "Infinite, smooth cinematic zoom. Hold the zoom key (default C) and scroll the mouse wheel to adjust the zoom depth with no fixed limits.",
+  "authors": [
+    "Vextoly",
+    "ItzAlphabet"
+  ],
+  "contact": {
+    "homepage": "https://git.disroot.org/Itz/vZoom"
+  },
+  "license": "Apache-2.0",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.vzoom.client.VZoomClient"
+    ],
+    "modmenu": [
+      "com.vzoom.client.config.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "vzoom.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.9",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

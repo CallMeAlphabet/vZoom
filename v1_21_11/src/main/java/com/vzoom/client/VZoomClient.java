@@ -1,3 +1,20 @@
+/*
+ * Copyright 2026 CallMeAlphabet (ItzAlphabet)
+ * Copyright 2026 Vextoly
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.vzoom.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
@@ -15,14 +32,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 
-/**
- * vZoom client entrypoint for the 1.21.11 target (Mojmap). Uses the layered
- * {@code HudElementRegistry} (HudRenderCallback is deprecated on this version).
- *
- * <p>Besides the main zoom key it registers a handful of auxiliary keybinds
- * (step in / step out / reset / reload config) processed once per
- * client tick.</p>
- */
 public class VZoomClient implements ClientModInitializer {
     public static final String MOD_ID = "vzoom";
 
@@ -77,7 +86,6 @@ public class VZoomClient implements ClientModInitializer {
         }
     }
 
-    /** Raw "zoom key currently held down" check (player must be in-world and no screen open). */
     public static boolean isZoomHeld() {
         if (ZOOM_KEY == null) return false;
         Minecraft mc = Minecraft.getInstance();
@@ -88,7 +96,6 @@ public class VZoomClient implements ClientModInitializer {
         return InputConstants.isKeyDown(window, code);
     }
 
-    /** Whether the player's current state permits zooming (auto-disable rules). */
     public static boolean isStateZoomable() {
         ZoomConfig c = ZoomState.INSTANCE.config;
         Minecraft mc = Minecraft.getInstance();
@@ -101,7 +108,6 @@ public class VZoomClient implements ClientModInitializer {
         return true;
     }
 
-    /** Legacy alias — treated as the raw held state. Prefer {@link ZoomState#isActive()}. */
     public static boolean isZoomActive() {
         return isZoomHeld();
     }

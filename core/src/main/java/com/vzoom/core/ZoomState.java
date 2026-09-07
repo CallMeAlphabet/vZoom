@@ -1,3 +1,20 @@
+/*
+ * Copyright 2026 CallMeAlphabet (ItzAlphabet)
+ * Copyright 2026 Vextoly
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.vzoom.core;
 
 /**
@@ -92,8 +109,7 @@ public final class ZoomState {
         active = desired && environmentAllowsZoom;
 
         if (active && !wasActive) {
-            targetZoom = ZoomMath.clamp(Math.max(targetZoom, getEffectiveDefaultZoom()),
-                    config.minZoom, config.maxZoom);
+            targetZoom = Math.max(Math.max(targetZoom, getEffectiveDefaultZoom()), config.minZoom);
             currentZoom = targetZoom;
         } else if (!active && wasActive && !config.retainZoomOnRelease) {
             targetZoom = 1.0;
@@ -164,25 +180,24 @@ public final class ZoomState {
                 break;
             }
         }
-        targetZoom = ZoomMath.clamp(targetZoom, config.minZoom, config.maxZoom);
+        targetZoom = Math.max(targetZoom, config.minZoom);
     }
 
     private int nearestDiscreteIndex(double zoom, int levels) {
         if (zoom <= config.minZoom) return 0;
-        if (zoom >= config.maxZoom) return levels - 1;
-        double minLog = Math.log(config.minZoom);
-        double maxLog = Math.log(config.maxZoom);
-        double zLog = Math.log(zoom);
-        double frac = (zLog - minLog) / (maxLog - minLog);
+        double base = Math.max(config.minZoom * 100.0, 2.0);
+        double logRange = Math.log(base) - Math.log(config.minZoom);
+        double zLog = Math.log(Math.max(zoom, config.minZoom));
+        double frac = logRange > 0 ? (zLog - Math.log(config.minZoom)) / logRange : 0;
+        frac = Math.min(frac, 1.0);
         int idx = (int) Math.round(frac * (levels - 1));
         return ZoomMath.clamp(idx, 0, levels - 1);
     }
 
     private double discreteValue(int idx, int levels) {
-        double minLog = Math.log(config.minZoom);
-        double maxLog = Math.log(config.maxZoom);
+        double base = Math.max(config.minZoom * 100.0, 2.0);
         double frac = levels <= 1 ? 0.0 : (double) idx / (levels - 1);
-        return Math.exp(ZoomMath.lerp(minLog, maxLog, frac));
+        return Math.exp(ZoomMath.lerp(Math.log(config.minZoom), Math.log(base), frac));
     }
 
     // ------------------------------------------------------------------
@@ -222,9 +237,9 @@ public final class ZoomState {
 
     public double getZoomBarProgress() {
         double minLog = Math.log(Math.max(1.0E-6, config.minZoom));
-        double maxLog = Math.log(Math.max(config.minZoom + 1.0E-6, config.maxZoom));
         double zLog = Math.log(Math.max(1.0E-6, currentZoom));
-        return ZoomMath.clamp01((zLog - minLog) / (maxLog - minLog));
+        double range = 12.0;
+        return ZoomMath.clamp01((zLog - minLog) / range);
     }
 
     // ------------------------------------------------------------------
@@ -238,8 +253,7 @@ public final class ZoomState {
         boolean wasActive = this.active;
         this.active = active;
         if (active && !wasActive) {
-            targetZoom = ZoomMath.clamp(Math.max(targetZoom, getEffectiveDefaultZoom()),
-                    config.minZoom, config.maxZoom);
+            targetZoom = Math.max(Math.max(targetZoom, getEffectiveDefaultZoom()), config.minZoom);
             currentZoom = targetZoom;
         } else if (!active && !config.retainZoomOnRelease) {
             targetZoom = 1.0;
@@ -262,7 +276,7 @@ public final class ZoomState {
     }
 
     public double getEffectiveDefaultZoom() {
-        return ZoomMath.clamp(config.defaultZoom, config.minZoom, config.maxZoom);
+        return Math.max(config.defaultZoom, config.minZoom);
     }
 
     public boolean shouldShowHud() {
