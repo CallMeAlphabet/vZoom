@@ -136,14 +136,18 @@ jobs:
   modrinth:
     name: Publish to Modrinth
     needs: build
-    if: github.event_name == 'release'
+    # Runs after every recompile that lands on main and on every release,
+    # so Modrinth always tracks main. Version bumps (e.g. 1.3.0) appear as
+    # new Modrinth versions automatically; existing version numbers are
+    # skipped (Modrinth keeps what it has until the version changes).
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
     env:
-      # Modrinth project slug (create the project once on modrinth.com first)
-      MODRINTH_PROJECT: vzoom
+      # Modrinth project slug: modrinth.com/mod/vextolyzoom
+      MODRINTH_PROJECT: vextolyzoom
     steps:
       - name: Download labeled jars
         uses: actions/download-artifact@v4
@@ -165,13 +169,19 @@ jobs:
             exit 0
           fi
 
-          changelog="${CHANGELOG:-Automated build of $GITHUB_SHA}"
-          changelog="${changelog:0:2000}"
+          if [ -n "${CHANGELOG:-}" ]; then
+            :
+          else
+            CHANGELOG="Automated build from main: https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+          fi
+          changelog="${CHANGELOG:0:2000}"
 
           shopt -s nullglob
           jars=(dist/vzoom-*.jar)
           echo "Publishing ${#jars[@]} versions to Modrinth project '$MODRINTH_PROJECT'..."
 
+          published=0
+          existed=0
           failed=0
           for jar in "${jars[@]}"; do
             base=$(basename "$jar" .jar)   # e.g. vzoom-1.2.0-Fabric-1.14
@@ -202,10 +212,12 @@ jobs:
             case "$http" in
               200|201)
                 echo "Published: $base"
+                published=$((published+1))
                 ;;
               400)
                 if grep -qi "already.exist" /tmp/resp.json; then
-                  echo "::warning::$base already exists on Modrinth (version_number taken) - skipped."
+                  echo "Already on Modrinth (same version number): $base"
+                  existed=$((existed+1))
                 else
                   echo "::error::Modrinth rejected $base (HTTP 400):"
                   cat /tmp/resp.json; echo; failed=$((failed+1))
@@ -222,9 +234,10 @@ jobs:
             echo "::error::$failed of ${#jars[@]} uploads failed."
             exit 1
           fi
-          echo "Published ${#jars[@]} Modrinth versions."
+          echo "::notice::Modrinth sync: $published new version(s) published, $existed already existed, $failed failed."
 
       - name: Attach jars to the GitHub release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
