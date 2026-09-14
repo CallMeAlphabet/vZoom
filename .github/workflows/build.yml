@@ -191,23 +191,32 @@ jobs:
             loader=$(echo "${middle%%-*}" | tr 'A-Z' 'a-z')
             mc=${middle#*-}
 
+            # Resolve the project's base62 ID once (the API requires it in the
+            # JSON body; a slug is not accepted there).
+            if [ -z "${PROJECT_ID:-}" ]; then
+              PROJECT_ID=$(curl -sS "https://api.modrinth.com/v2/project/$MODRINTH_PROJECT" | jq -r .id)
+              echo "Resolved project '$MODRINTH_PROJECT' -> id $PROJECT_ID"
+            fi
+
             data=$(jq -n \
+              --arg project_id "$PROJECT_ID" \
               --arg name "vZoom $base" \
               --arg version_number "$modver+$loader-$mc" \
               --arg changelog "$changelog" \
               --arg loader "$loader" \
               --arg mc "$mc" \
-              --arg base "$base" \
-              '{name: $name, version_number: $version_number, changelog: $changelog,
-                dependencies: [], game_versions: [$mc], loaders: [$loader],
-                featured: false, status: "listed", requested_status: "listed",
-                release_channel: "release", file_parts: [$base]}')
+              --arg file "$base.jar" \
+              '{project_id: $project_id, name: $name, version_number: $version_number,
+                changelog: $changelog, dependencies: [], game_versions: [$mc],
+                loaders: [$loader], featured: false, status: "listed",
+                requested_status: "listed", release_channel: "release",
+                file_parts: [$file]}')
             http=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
               -X POST "https://api.modrinth.com/v2/version" \
               -H "Authorization: $MODRINTH_TOKEN" \
               -H "User-Agent: CallMeAlphabet/vZoom (https://github.com/CallMeAlphabet/vZoom)" \
               -F "data=$data" \
-              -F "$base=@$jar")
+              -F "file=@$jar;filename=$base.jar")
 
             case "$http" in
               200|201)
