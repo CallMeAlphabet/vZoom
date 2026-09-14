@@ -68,6 +68,22 @@ public final class ZoomState {
     // Per-frame activation (call exactly once per frame)
     // ------------------------------------------------------------------
 
+    private long lastFrameNanos = 0L;
+
+    /**
+     * Once-per-frame state tick. Safe to call from any per-frame hook
+     * (e.g. GameRenderer.getFov, which can run more than once per frame):
+     * repeated calls within the same frame are ignored, so the zoom state
+     * keeps ticking even while the HUD is hidden (F1).
+     */
+    public void tickFrame(boolean keyHeld, boolean environmentAllowsZoom) {
+        long now = System.nanoTime();
+        if (now - lastFrameNanos < 2_000_000L) return;
+        lastFrameNanos = now;
+        updateActivation(keyHeld, environmentAllowsZoom);
+        update();
+    }
+
     /**
      * Resolve whether the zoom should be active this frame given the raw key
      * state and whether the player's environment permits zooming. Handles the
@@ -249,17 +265,6 @@ public final class ZoomState {
         return active;
     }
 
-    public void setActive(boolean active) {
-        boolean wasActive = this.active;
-        this.active = active;
-        if (active && !wasActive) {
-            targetZoom = Math.max(Math.max(targetZoom, getEffectiveDefaultZoom()), config.minZoom);
-            currentZoom = targetZoom;
-        } else if (!active && !config.retainZoomOnRelease) {
-            targetZoom = 1.0;
-        }
-    }
-
     // ------------------------------------------------------------------
     // HUD helpers
     // ------------------------------------------------------------------
@@ -271,10 +276,6 @@ public final class ZoomState {
         return currentZoom;
     }
 
-    public double getTargetZoom() {
-        return targetZoom;
-    }
-
     public double getEffectiveDefaultZoom() {
         return Math.max(config.defaultZoom, config.minZoom);
     }
@@ -282,12 +283,6 @@ public final class ZoomState {
     public boolean shouldShowHud() {
         if (!active || !config.hudEnabled || config.hudStyle == HudStyle.MINIMAL) return false;
         return Math.abs(currentZoom - 1.0) > 1.0E-3;
-    }
-
-    public void reset() {
-        currentZoom = 1.0;
-        targetZoom = 1.0;
-        toggledOn = false;
     }
 
     public void resetZoom() {

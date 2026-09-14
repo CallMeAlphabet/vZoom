@@ -40,27 +40,6 @@ public final class ZoomMath {
         return a + (b - a) * t;
     }
 
-    /** Cubic smoothstep in [0,1] -> [0,1]. */
-    public static double smoothstep(double t) {
-        t = clamp01(t);
-        return t * t * (3.0 - 2.0 * t);
-    }
-
-    /**
-     * Frame-rate independent cinematic approach of {@code current} towards
-     * {@code target} using exponential smoothing.
-     *
-     * <p>{@code k} is a speed constant (higher = snappier). {@code dt} is the
-     * elapsed seconds since the previous frame (clamped internally so a paused
-     * tab cannot produce a teleport).</p>
-     */
-    public static double approach(double current, double target, double k, double dt) {
-        if (dt <= 0.0) return current;
-        if (dt > 0.25) dt = 0.25; // guard against huge gaps (alt-tab / lag spikes)
-        double t = 1.0 - Math.exp(-k * dt);
-        return current + (target - current) * t;
-    }
-
     /**
      * Easing-aware approach. Maps {@link EasingMode} to a concrete per-frame
      * blend factor so the same {@code smoothing} constant yields noticeably

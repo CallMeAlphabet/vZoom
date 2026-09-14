@@ -1,5 +1,7 @@
 # vZoom
-vZoom — a feature-rich, smooth cinematic zoom mod for Minecraft Fabric
+vZoom — a feature-rich, smooth cinematic zoom mod for Minecraft Fabric & NeoForge
+
+Available for Fabric 1.14–26.2 and NeoForge 1.20.2–26.2.
 
 ## Table of Contents
 - [Quick Start](#quick-start)
@@ -24,7 +26,6 @@ All keybinds are configurable under `Options → Controls`.
 | **Zoom In (step)** | unbound | Zooms in by one level per press (same as one scroll-up tick). Only does something while zoom is engaged. |
 | **Zoom Out (step)** | unbound | Zooms out by one level per press. |
 | **Reset Zoom** | unbound | Snaps the zoom value straight back to 1.0 (normal view) without disengaging. |
-| **Previous Preset** | unbound | Jumps to the previous saved preset. |
 | **Reload Config** | unbound | Re-reads `config/vzoom.json` live. |
 
 
@@ -42,11 +43,11 @@ Open the settings via Mod Menu (a suggested, optional dependency), or edit `conf
 
 ## Note
 
-Colors are stored as ARGB integers (`0xAARRGGBB`). The settings screen cycles a small palette for the HUD color**, for full control (including the panel color that has no screen control) edit `config/vzoom.json` directly and press "Reload Config".
+Colors are stored as ARGB integers (`0xAARRGGBB`). The settings screen cycles a small palette for the HUD color; for full control (including the panel color that has no screen control) edit `config/vzoom.json` directly and press "Reload Config".
 
 
 ## Manually Building
 
     ./gradlew build
 
-Jars are output under `v[version]/build/libs/`
+Jars are output under `versions/<module>/build/libs/` (e.g. `versions/neoforge-26_2/build/libs/vzoom-neoforge-26_2-1.2.0.jar`).

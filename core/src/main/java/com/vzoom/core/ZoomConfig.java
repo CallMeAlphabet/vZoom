@@ -67,6 +67,8 @@ public final class ZoomConfig {
 
     /** Whether the mouse should be smoothed (cinematic camera) while zooming. */
     public boolean cinematicCamera = true;
+    /** Extra mouse-damping multiplier while zoomed with the cinematic camera on. */
+    public double cinematicSensitivity = 1.0;
 
     /** When false the zoom factor is reset to 1.0 the moment the key is released. */
     public boolean retainZoomOnRelease = false;

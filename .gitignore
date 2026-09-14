@@ -1,0 +1,34 @@
+# Compiled output
+build/
+out/
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# JDK auto-provisioned by foojay
+.gradle/jdks/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fabric / Loom cache (auto-downloaded, not source)
+run/
+logs/
+
+# Distribution zips
+*.zip
