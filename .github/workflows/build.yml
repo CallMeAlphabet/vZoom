@@ -34,6 +34,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Loom remaps every dependency (Fabric API, Mod Menu, ...) into the
+      # PROJECT-level .gradle/loom-cache, which setup-gradle does not persist.
+      # Without this cache each run re-remaps deps for 40+ modules (~10 min).
+      # The content is self-keyed by artifact coordinates, so a stable key is
+      # safe: dependency/MC pin changes create new entries, and mod_version
+      # bumps must NOT invalidate it. Bump v1 -> v2 only when the Loom plugin
+      # version changes.
+      - name: Cache Loom project cache (remapped dependencies)
+        uses: actions/cache@v4
+        with:
+          path: .gradle/loom-cache
+          key: loom-project-cache-v1
+          restore-keys: |
+            loom-project-cache-
+
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -51,7 +66,7 @@ jobs:
       # modules must be built in one invocation (Gradle configures the
       # fabric-* projects before the neoforge-* projects).
       - name: Build
-        run: ./gradlew -Dorg.gradle.internal.repository.max.tentatives=10 build --max-workers=3 --stacktrace
+        run: ./gradlew -Dorg.gradle.internal.repository.max.tentatives=10 build --max-workers=4 --stacktrace
 
       - name: Collect and label jars
         id: jars
