@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class GameRendererMixin {
 
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
-    private void vzoom$modifyFov(CallbackInfoReturnable<Float> cir) {
+    private void vzoom$modifyFov(CallbackInfoReturnable<Double> cir) {
         ZoomState s = ZoomState.INSTANCE;
         // Tick here rather than from the HUD callback: the world (and this
         // FOV hook) still runs while the HUD is hidden with F1.
@@ -35,6 +35,6 @@ public class GameRendererMixin {
                 com.vzoom.client.VZoomClient.isStateZoomable());
         Minecraft mc = Minecraft.getInstance();
         mc.options.smoothCamera = s.isActive() && s.config.cinematicCamera;
-        cir.setReturnValue((float) s.computeFov(cir.getReturnValue()));
+        cir.setReturnValue(s.computeFov(cir.getReturnValue()));
     }
 }
