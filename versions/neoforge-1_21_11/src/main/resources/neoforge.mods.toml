@@ -1,12 +1,14 @@
 modLoader="javafml"
 loaderVersion="[4,)"
 license="Apache-2.0"
+issueTrackerURL="https://github.com/CallMeAlphabet/vZoom/issues"
 
 [[mods]]
 modId="vzoom"
 version="${version}"
 displayName="vZoom"
 authors="Vextoly, ItzAlphabet"
+displayURL="https://github.com/CallMeAlphabet/vZoom"
 description='''Infinite, smooth cinematic zoom. Hold the zoom key (default C) and scroll the mouse wheel to adjust the zoom depth with no fixed limits.'''
 
 [[mixins]]

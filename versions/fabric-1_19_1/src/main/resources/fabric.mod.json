@@ -9,7 +9,8 @@
     "ItzAlphabet"
   ],
   "contact": {
-    "homepage": "https://git.disroot.org/Itz/vZoom"
+    "homepage": "https://github.com/CallMeAlphabet/vZoom",
+    "issues": "https://github.com/CallMeAlphabet/vZoom/issues"
   },
   "license": "Apache-2.0",
   "environment": "client",
