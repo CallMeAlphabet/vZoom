@@ -15,6 +15,8 @@ on:
       - 'README.md'
       - 'LICENSE'
   workflow_dispatch:
+  release:
+    types: [published]
 
 concurrency:
   group: build-${{ github.ref }}
@@ -130,3 +132,99 @@ jobs:
               --notes "Automated builds from \`main\`. Use a version tag (e.g. \`v1.2.0\`) for stable releases."
           gh release upload latest --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
           echo "Pushed $(ls dist | wc -l) jars to the 'latest' release."
+
+  modrinth:
+    name: Publish to Modrinth
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      # Modrinth project slug (create the project once on modrinth.com first)
+      MODRINTH_PROJECT: vzoom
+    steps:
+      - name: Download labeled jars
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vzoom-*-jars
+          merge-multiple: true
+          path: dist
+
+      - name: Publish each labeled jar as a Modrinth version
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CHANGELOG: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MODRINTH_TOKEN:-}" ]; then
+            echo "::warning::Secret MODRINTH_TOKEN is not set - skipping Modrinth publishing."
+            echo "Create a PAT at https://modrinth.com/settings/pats (with write scopes) and add"
+            echo "it as the repository secret MODRINTH_TOKEN (Settings > Secrets and variables > Actions)."
+            exit 0
+          fi
+
+          changelog="${CHANGELOG:-Automated build of $GITHUB_SHA}"
+          changelog="${changelog:0:2000}"
+
+          shopt -s nullglob
+          jars=(dist/vzoom-*.jar)
+          echo "Publishing ${#jars[@]} versions to Modrinth project '$MODRINTH_PROJECT'..."
+
+          failed=0
+          for jar in "${jars[@]}"; do
+            base=$(basename "$jar" .jar)   # e.g. vzoom-1.2.0-Fabric-1.14
+            rest=${base#vzoom-}
+            modver=${rest%%-*}             # 1.2.0
+            middle=${rest#*-}              # Fabric-1.14
+            loader=$(echo "${middle%%-*}" | tr 'A-Z' 'a-z')
+            mc=${middle#*-}
+
+            data=$(jq -n \
+              --arg name "vZoom $base" \
+              --arg version_number "$modver+$loader-$mc" \
+              --arg changelog "$changelog" \
+              --arg loader "$loader" \
+              --arg mc "$mc" \
+              --arg base "$base" \
+              '{name: $name, version_number: $version_number, changelog: $changelog,
+                dependencies: [], game_versions: [$mc], loaders: [$loader],
+                featured: false, status: "listed", requested_status: "listed",
+                release_channel: "release", file_parts: [$base]}')
+            http=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+              -X POST "https://api.modrinth.com/v2/version" \
+              -H "Authorization: $MODRINTH_TOKEN" \
+              -H "User-Agent: CallMeAlphabet/vZoom (https://github.com/CallMeAlphabet/vZoom)" \
+              -F "data=$data" \
+              -F "$base=@$jar")
+
+            case "$http" in
+              200|201)
+                echo "Published: $base"
+                ;;
+              400)
+                if grep -qi "already.exist" /tmp/resp.json; then
+                  echo "::warning::$base already exists on Modrinth (version_number taken) - skipped."
+                else
+                  echo "::error::Modrinth rejected $base (HTTP 400):"
+                  cat /tmp/resp.json; echo; failed=$((failed+1))
+                fi
+                ;;
+              *)
+                echo "::error::Modrinth upload failed for $base (HTTP $http):"
+                cat /tmp/resp.json; echo; failed=$((failed+1))
+                ;;
+            esac
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::$failed of ${#jars[@]} uploads failed."
+            exit 1
+          fi
+          echo "Published ${#jars[@]} Modrinth versions."
+
+      - name: Attach jars to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
