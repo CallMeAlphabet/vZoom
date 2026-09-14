@@ -1,0 +1,132 @@
+name: Build
+
+# Rebuilds every module whenever anything except README.md / LICENSE changes.
+# Jars are parsed out of Gradle's output names, labeled with loader
+# (Fabric / NeoForge) + Minecraft version, uploaded as workflow artifacts,
+# and pushed to a rolling "latest" release on pushes to main.
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Gradle build (all modules)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up Gradle (caches dependencies + Loom MC jars across runs)
+        uses: gradle/actions/setup-gradle@v4
+
+      # NOTE: the NeoForge modules compile against the Mojang-mapped Minecraft
+      # jar that Loom caches while the Fabric modules are CONFIGURED, so all
+      # modules must be built in one invocation (Gradle configures the
+      # fabric-* projects before the neoforge-* projects).
+      - name: Build
+        run: ./gradlew -Dorg.gradle.internal.repository.max.tentatives=10 build --max-workers=3 --stacktrace
+
+      - name: Collect and label jars
+        id: jars
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          shopt -s nullglob
+
+          jars=(versions/*/build/libs/vzoom-*.jar)
+          modules=$(find versions -mindepth 1 -maxdepth 1 -type d | wc -l)
+          found=${#jars[@]}
+          if [ "$found" -ne "$modules" ]; then
+            echo "::error::Expected $modules module jars, found $found in versions/*/build/libs"
+            exit 1
+          fi
+
+          echo "## Built jars" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Label | File |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+
+          modver=""
+          for jar in "${jars[@]}"; do
+            case "$jar" in *-sources.jar) continue ;; esac
+            base=$(basename "$jar" .jar)     # e.g. vzoom-fabric-1_14-1.2.0
+            rest=${base#vzoom-}              # fabric-1_14-1.2.0
+            modver=${rest##*-}               # 1.2.0
+            middle=${rest%-"$modver"}        # fabric-1_14
+            loader=${middle%%-*}             # fabric | neoforge
+            mc=${middle#*-}                  # 1_14
+            mc=${mc//_/.}                    # 1.14
+
+            case "$loader" in
+              fabric)   label=Fabric ;;
+              neoforge) label=NeoForge ;;
+              *)        label=$loader ;;
+            esac
+
+            out="vzoom-${modver}-${label}-${mc}.jar"
+            cp "$jar" "dist/$out"
+            echo "| $label $mc | \`$out\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          echo "modver=$modver" >> "$GITHUB_OUTPUT"
+          echo "Packaged $(ls dist | wc -l) labeled jars (mod version $modver)."
+
+      - name: Upload labeled jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: vzoom-${{ steps.jars.outputs.modver }}-jars
+          path: dist/*.jar
+          if-no-files-found: error
+
+  release:
+    name: Update rolling "latest" release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download labeled jars
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vzoom-*-jars
+          merge-multiple: true
+          path: dist
+
+      - name: Publish to rolling "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create latest --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --prerelease \
+              --title "Latest development builds" \
+              --notes "Automated builds from \`main\`. Use a version tag (e.g. \`v1.2.0\`) for stable releases."
+          gh release upload latest --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
+          echo "Pushed $(ls dist | wc -l) jars to the 'latest' release."
