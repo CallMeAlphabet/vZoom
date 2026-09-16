@@ -13,6 +13,7 @@
     "issues": "https://github.com/CallMeAlphabet/vZoom/issues"
   },
   "license": "Apache-2.0",
+  "icon": "assets/vzoom/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
