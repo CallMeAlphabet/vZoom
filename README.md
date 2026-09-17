@@ -1,7 +1,7 @@
 # vZoom
 vZoom — a feature-rich, smooth cinematic zoom mod for Minecraft Fabric & NeoForge
 
-Available for Fabric 1.14–26.2 and NeoForge 1.20.2–26.2.
+Available for Fabric 1.14–26.3 and NeoForge 1.20.2–26.3.
 
 ## Table of Contents
 - [Quick Start](#quick-start)
