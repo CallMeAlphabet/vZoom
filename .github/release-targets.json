@@ -1,0 +1,51 @@
+[
+  {
+    "id": "fabric-1.14-1.16.5",
+    "loader": "fabric",
+    "source": "ranges/fabric-legacy/build/libs/vzoom-fabric-1.14-1.16.5",
+    "asset": "Fabric-1.14.4-1.16.5",
+    "game_versions": ["1.14.4", "1.15", "1.15.1", "1.15.2", "1.16", "1.16.1", "1.16.2", "1.16.3", "1.16.4", "1.16.5"]
+  },
+  {
+    "id": "fabric-1.17-1.20.6",
+    "loader": "fabric",
+    "source": "ranges/fabric-modern/build/libs/vzoom-fabric-1.17-1.20.6",
+    "asset": "Fabric-1.17-1.20.6",
+    "game_versions": ["1.17", "1.17.1", "1.18", "1.18.1", "1.18.2", "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6"]
+  },
+  {
+    "id": "fabric-1.21-1.21.11",
+    "loader": "fabric",
+    "source": "ranges/fabric-current/build/libs/vzoom-fabric-1.21-1.21.11",
+    "asset": "Fabric-1.21-1.21.11",
+    "game_versions": ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+  },
+  {
+    "id": "fabric-26.1-26.3",
+    "loader": "fabric",
+    "source": "ranges/fabric-26/build/libs/vzoom-fabric-26.1-26.3",
+    "asset": "Fabric-26.1-26.3",
+    "game_versions": ["26.1", "26.1.1", "26.1.2", "26.2", "26.3"]
+  },
+  {
+    "id": "neoforge-1.20.2-1.20.4",
+    "loader": "neoforge",
+    "source": "ranges/neoforge-legacy/build/libs/vzoom-neoforge-1.20.2-1.20.4",
+    "asset": "NeoForge-1.20.2-1.20.4",
+    "game_versions": ["1.20.2", "1.20.3", "1.20.4"]
+  },
+  {
+    "id": "neoforge-1.20.5-1.21.11",
+    "loader": "neoforge",
+    "source": "ranges/neoforge-current/build/libs/vzoom-neoforge-1.20.5-1.21.11",
+    "asset": "NeoForge-1.20.5-1.21.11",
+    "game_versions": ["1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+  },
+  {
+    "id": "neoforge-26.1-26.3",
+    "loader": "neoforge",
+    "source": "ranges/neoforge-26/build/libs/vzoom-neoforge-26.1-26.3",
+    "asset": "NeoForge-26.1-26.3",
+    "game_versions": ["26.1", "26.1.1", "26.1.2", "26.2", "26.3"]
+  }
+]

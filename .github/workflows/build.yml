@@ -1,19 +1,8 @@
 name: Build
 
-# Rebuilds every module whenever anything except README.md / LICENSE changes.
-# Jars are parsed out of Gradle's output names, labeled with loader
-# (Fabric / NeoForge) + Minecraft version, uploaded as workflow artifacts,
-# and pushed to a rolling "latest" release on pushes to main.
-
 on:
   push:
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
   pull_request:
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
   workflow_dispatch:
   release:
     types: [published]
@@ -27,241 +16,192 @@ permissions:
 
 jobs:
   build:
-    name: Gradle build (all modules)
+    name: Build range jars
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    outputs:
+      modver: ${{ steps.collect.outputs.modver }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # Loom remaps every dependency (Fabric API, Mod Menu, ...) into the
-      # PROJECT-level .gradle/loom-cache, which setup-gradle does not persist.
-      # Without this cache each run re-remaps deps for 40+ modules (~10 min).
-      # The content is self-keyed by artifact coordinates, so a stable key is
-      # safe: dependency/MC pin changes create new entries, and mod_version
-      # bumps must NOT invalidate it. Bump v1 -> v2 only when the Loom plugin
-      # version changes.
-      - name: Cache Loom project cache (remapped dependencies)
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
-          path: .gradle/loom-cache
-          key: loom-project-cache-v1
+          path: |
+            .gradle/loom-cache
+            ~/.gradle/caches/fabric-loom
+          key: loom-range-cache-v1
           restore-keys: |
-            loom-project-cache-
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
+            loom-range-cache-
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
-
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
-
-      - name: Set up Gradle (caches dependencies + Loom MC jars across runs)
-        uses: gradle/actions/setup-gradle@v4
-
-      # NOTE: the NeoForge modules compile against the Mojang-mapped Minecraft
-      # jar that Loom caches while the Fabric modules are CONFIGURED, so all
-      # modules must be built in one invocation (Gradle configures the
-      # fabric-* projects before the neoforge-* projects).
-      - name: Build
-        run: ./gradlew -Dorg.gradle.internal.repository.max.tentatives=10 build --max-workers=4 --stacktrace
-
-      - name: Collect and label jars
-        id: jars
+      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build adapters and range jars
         run: |
           set -euo pipefail
+          gradle() {
+            ./gradlew --no-daemon -Dorg.gradle.jvmargs='-Xmx3G' --max-workers=1 "$@"
+          }
+          for task in \
+            :versions:fabric-1_14:remapJar \
+            :versions:fabric-1_15:remapJar \
+            :versions:fabric-1_16:remapJar \
+            :versions:fabric-1_16_1:remapJar; do gradle "$task"; done
+          gradle :ranges:fabric-legacy:rangeJar
+          for task in \
+            :versions:fabric-1_17:remapJar \
+            :versions:fabric-1_19:remapJar \
+            :versions:fabric-1_19_3:remapJar \
+            :versions:fabric-1_20:remapJar \
+            :versions:fabric-1_20_2:remapJar; do gradle "$task"; done
+          gradle :ranges:fabric-modern:rangeJar
+          for task in \
+            :versions:fabric-1_21:remapJar \
+            :versions:fabric-1_21_2:remapJar \
+            :versions:fabric-1_21_6:remapJar \
+            :versions:fabric-1_21_9:remapJar \
+            :versions:fabric-1_21_11:remapJar; do gradle "$task"; done
+          gradle :ranges:fabric-current:rangeJar
+          for task in \
+            :versions:fabric-26_1:jar \
+            :versions:fabric-26_2:jar \
+            :versions:fabric-26_3:jar; do gradle "$task"; done
+          gradle :ranges:fabric-26:rangeJar
+          gradle :ranges:neoforge-legacy:rangeJar
+          for task in \
+            :versions:neoforge-1_20_5:jar \
+            :versions:neoforge-1_21:jar \
+            :versions:neoforge-1_21_2:jar \
+            :versions:neoforge-1_21_6:jar \
+            :versions:neoforge-1_21_9:jar \
+            :versions:neoforge-1_21_11:jar; do gradle "$task"; done
+          gradle :ranges:neoforge-current:rangeJar
+          for task in \
+            :versions:neoforge-26_1:jar \
+            :versions:neoforge-26_2:jar \
+            :versions:neoforge-26_3:jar; do gradle "$task"; done
+          gradle :ranges:neoforge-26:rangeJar
+      - name: Collect range jars
+        id: collect
+        run: |
+          set -euo pipefail
+          modver=$(sed -n 's/^mod_version=//p' gradle.properties)
           mkdir -p dist
-          shopt -s nullglob
-
-          jars=(versions/*/build/libs/vzoom-*.jar)
-          modules=$(find versions -mindepth 1 -maxdepth 1 -type d | wc -l)
-          found=${#jars[@]}
-          if [ "$found" -ne "$modules" ]; then
-            echo "::error::Expected $modules module jars, found $found in versions/*/build/libs"
-            exit 1
-          fi
-
-          echo "## Built jars" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Label | File |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
-
-          modver=""
-          for jar in "${jars[@]}"; do
-            case "$jar" in *-sources.jar) continue ;; esac
-            base=$(basename "$jar" .jar)     # e.g. vzoom-fabric-1_14-1.2.0
-            rest=${base#vzoom-}              # fabric-1_14-1.2.0
-            modver=${rest##*-}               # 1.2.0
-            middle=${rest%-"$modver"}        # fabric-1_14
-            loader=${middle%%-*}             # fabric | neoforge
-            mc=${middle#*-}                  # 1_14
-            mc=${mc//_/.}                    # 1.14
-
-            case "$loader" in
-              fabric)   label=Fabric ;;
-              neoforge) label=NeoForge ;;
-              *)        label=$loader ;;
-            esac
-
-            out="vzoom-${modver}-${label}-${mc}.jar"
-            cp "$jar" "dist/$out"
-            echo "| $label $mc | \`$out\` |" >> "$GITHUB_STEP_SUMMARY"
-          done
-
+          while IFS= read -r target; do
+            source=$(jq -r .source <<<"$target")
+            asset=$(jq -r .asset <<<"$target")
+            cp "${source}-${modver}.jar" "dist/vzoom-${modver}-${asset}.jar"
+          done < <(jq -c '.[]' .github/release-targets.json)
+          test "$(find dist -maxdepth 1 -name '*.jar' | wc -l)" -eq 7
           echo "modver=$modver" >> "$GITHUB_OUTPUT"
-          echo "Packaged $(ls dist | wc -l) labeled jars (mod version $modver)."
-
-      - name: Upload labeled jars
-        uses: actions/upload-artifact@v4
+      - name: Verify range jars
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import zipfile
+          targets = json.loads(pathlib.Path('.github/release-targets.json').read_text())
+          modver = next(line.split('=', 1)[1] for line in pathlib.Path('gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
+          files = sorted(pathlib.Path('dist').glob('*.jar'))
+          if len(files) != len(targets):
+              raise SystemExit('unexpected range jar count')
+          for target in targets:
+              path = pathlib.Path('dist') / f"vzoom-{modver}-{target['asset']}.jar"
+              with zipfile.ZipFile(path) as jar:
+                  names = jar.namelist()
+                  if len(names) != len(set(names)):
+                      raise SystemExit(f'duplicate entries in {path.name}')
+                  if target['loader'] == 'fabric':
+                      metadata = json.loads(jar.read('fabric.mod.json'))
+                      if metadata['id'] != 'vzoom' or len(metadata['entrypoints']['client']) != 1:
+                          raise SystemExit(f'invalid Fabric metadata in {path.name}')
+                  else:
+                      metadata = [name for name in names if name in {'mods.toml', 'neoforge.mods.toml'}]
+                      if len(metadata) != 1:
+                          raise SystemExit(f'invalid NeoForge metadata in {path.name}')
+                  if 'vzoom.mixins.json' not in names or 'vzoom-range.properties' not in names and target['id'] != 'neoforge-1.20.2-1.20.4':
+                      raise SystemExit(f'incomplete range jar {path.name}')
+          PY
+      - uses: actions/upload-artifact@v4
         with:
-          name: vzoom-${{ steps.jars.outputs.modver }}-jars
+          name: vzoom-${{ steps.collect.outputs.modver }}-ranges
           path: dist/*.jar
           if-no-files-found: error
 
   release:
-    name: Update rolling "latest" release
+    name: Update rolling latest release
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download labeled jars
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          pattern: vzoom-*-jars
-          merge-multiple: true
+          name: vzoom-${{ needs.build.outputs.modver }}-ranges
           path: dist
-
-      - name: Publish to rolling "latest" release
-        env:
+      - env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create latest --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" --prerelease \
-              --title "Latest development builds" \
-              --notes "Automated builds from \`main\`. Use a version tag (e.g. \`v1.2.0\`) for stable releases."
+          gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create latest --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Latest development builds" --notes "Automated builds from main."
           gh release upload latest --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
-          echo "Pushed $(ls dist | wc -l) jars to the 'latest' release."
 
   modrinth:
-    name: Publish to Modrinth
+    name: Publish range jars to Modrinth
     needs: build
-    # Runs after every recompile that lands on main and on every release,
-    # so Modrinth always tracks main. Version bumps (e.g. 1.3.0) appear as
-    # new Modrinth versions automatically; existing version numbers are
-    # skipped (Modrinth keeps what it has until the version changes).
     if: github.event_name == 'release' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
     env:
-      # Modrinth project slug: modrinth.com/mod/vextolyzoom
       MODRINTH_PROJECT: vextolyzoom
     steps:
-      - name: Download labeled jars
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          pattern: vzoom-*-jars
-          merge-multiple: true
+          name: vzoom-${{ needs.build.outputs.modver }}-ranges
           path: dist
-
-      - name: Publish each labeled jar as a Modrinth version
-        env:
+      - env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CHANGELOG: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           if [ -z "${MODRINTH_TOKEN:-}" ]; then
-            echo "::warning::Secret MODRINTH_TOKEN is not set - skipping Modrinth publishing."
-            echo "Create a PAT at https://modrinth.com/settings/pats (with write scopes) and add"
-            echo "it as the repository secret MODRINTH_TOKEN (Settings > Secrets and variables > Actions)."
+            echo "::warning::MODRINTH_TOKEN is not set; skipping Modrinth publishing."
             exit 0
           fi
-
-          if [ -n "${CHANGELOG:-}" ]; then
-            :
-          else
-            CHANGELOG="Automated build from main: https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
-          fi
-          changelog="${CHANGELOG:0:2000}"
-
-          shopt -s nullglob
-          jars=(dist/vzoom-*.jar)
-          echo "Publishing ${#jars[@]} versions to Modrinth project '$MODRINTH_PROJECT'..."
-
-          published=0
-          existed=0
+          modver='${{ needs.build.outputs.modver }}'
+          changelog="${CHANGELOG:-Automated build from main: https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA}"
+          changelog="${changelog:0:2000}"
+          project_id=$(curl -fsSL "https://api.modrinth.com/v2/project/$MODRINTH_PROJECT" | jq -r .id)
           failed=0
-          for jar in "${jars[@]}"; do
-            base=$(basename "$jar" .jar)   # e.g. vzoom-1.2.0-Fabric-1.14
-            rest=${base#vzoom-}
-            modver=${rest%%-*}             # 1.2.0
-            middle=${rest#*-}              # Fabric-1.14
-            loader=$(echo "${middle%%-*}" | tr 'A-Z' 'a-z')
-            mc=${middle#*-}
-
-            # Resolve the project's base62 ID once (the API requires it in the
-            # JSON body; a slug is not accepted there).
-            if [ -z "${PROJECT_ID:-}" ]; then
-              PROJECT_ID=$(curl -sS "https://api.modrinth.com/v2/project/$MODRINTH_PROJECT" | jq -r .id)
-              echo "Resolved project '$MODRINTH_PROJECT' -> id $PROJECT_ID"
-            fi
-
+          while IFS= read -r target; do
+            id=$(jq -r .id <<<"$target")
+            loader=$(jq -r .loader <<<"$target")
+            asset=$(jq -r .asset <<<"$target")
+            game_versions=$(jq -c .game_versions <<<"$target")
+            jar="dist/vzoom-${modver}-${asset}.jar"
             data=$(jq -n \
-              --arg project_id "$PROJECT_ID" \
-              --arg name "vZoom $base" \
-              --arg version_number "$modver+$loader-$mc" \
+              --arg project_id "$project_id" \
+              --arg name "vZoom ${modver} ${asset}" \
+              --arg version_number "${modver}+${id}" \
               --arg changelog "$changelog" \
               --arg loader "$loader" \
-              --arg mc "$mc" \
-              --arg file "$base.jar" \
-              '{project_id: $project_id, name: $name, version_number: $version_number,
-                changelog: $changelog, dependencies: [], game_versions: [$mc],
-                loaders: [$loader], featured: false, status: "listed",
-                requested_status: "listed", release_channel: "release",
-                file_parts: [$file]}')
-            http=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
-              -X POST "https://api.modrinth.com/v2/version" \
-              -H "Authorization: $MODRINTH_TOKEN" \
-              -H "User-Agent: CallMeAlphabet/vZoom (https://github.com/CallMeAlphabet/vZoom)" \
-              -F "data=$data" \
-              -F "file=@$jar;filename=$base.jar")
-
+              --arg file "$(basename "$jar")" \
+              --argjson game_versions "$game_versions" \
+              '{project_id: $project_id, name: $name, version_number: $version_number, changelog: $changelog, dependencies: [], game_versions: $game_versions, loaders: [$loader], featured: false, status: "listed", requested_status: "listed", release_channel: "release", file_parts: [$file]}')
+            http=$(curl -sS -o /tmp/modrinth-response.json -w '%{http_code}' -X POST 'https://api.modrinth.com/v2/version' -H "Authorization: $MODRINTH_TOKEN" -H 'User-Agent: CallMeAlphabet/vZoom (https://github.com/CallMeAlphabet/vZoom)' -F "data=$data" -F "file=@$jar;filename=$(basename "$jar")")
             case "$http" in
-              200|201)
-                echo "Published: $base"
-                published=$((published+1))
-                ;;
-              400)
-                if grep -qi "already.exist" /tmp/resp.json; then
-                  echo "Already on Modrinth (same version number): $base"
-                  existed=$((existed+1))
-                else
-                  echo "::error::Modrinth rejected $base (HTTP 400):"
-                  cat /tmp/resp.json; echo; failed=$((failed+1))
-                fi
-                ;;
-              *)
-                echo "::error::Modrinth upload failed for $base (HTTP $http):"
-                cat /tmp/resp.json; echo; failed=$((failed+1))
-                ;;
+              200|201) echo "Published $id" ;;
+              400) grep -qi 'already.exist' /tmp/modrinth-response.json && echo "Already published $id" || { cat /tmp/modrinth-response.json; failed=$((failed + 1)); } ;;
+              *) cat /tmp/modrinth-response.json; failed=$((failed + 1)) ;;
             esac
-          done
-
-          if [ "$failed" -ne 0 ]; then
-            echo "::error::$failed of ${#jars[@]} uploads failed."
-            exit 1
-          fi
-          echo "::notice::Modrinth sync: $published new version(s) published, $existed already existed, $failed failed."
-
-      - name: Attach jars to the GitHub release
-        if: github.event_name == 'release'
+          done < <(jq -c '.[]' .github/release-targets.json)
+          test "$failed" -eq 0
+      - if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber dist/*.jar
