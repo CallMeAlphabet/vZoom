@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.vzoom.range.fabric.modern",
+  "plugin": "com.vzoom.range.FabricRangeMixinPlugin",
+  "compatibilityLevel": "JAVA_16",
+  "client": [
+    "v117.mixin.GameRendererMixin",
+    "v117.mixin.MouseHandlerMixin",
+    "v119.mixin.GameRendererMixin",
+    "v119.mixin.MouseHandlerMixin",
+    "v1193.mixin.GameRendererMixin",
+    "v1193.mixin.MouseHandlerMixin",
+    "v120.mixin.GameRendererMixin",
+    "v120.mixin.MouseHandlerMixin",
+    "v1202.mixin.GameRendererMixin",
+    "v1202.mixin.MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

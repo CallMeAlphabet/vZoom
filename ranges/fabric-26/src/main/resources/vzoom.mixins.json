@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.vzoom.range.fabric.twentysix",
+  "plugin": "com.vzoom.range.FabricRangeMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "v261.mixin.CameraMixin",
+    "v261.mixin.MouseHandlerMixin",
+    "v262.mixin.CameraMixin",
+    "v262.mixin.MouseHandlerMixin",
+    "v263.mixin.CameraMixin",
+    "v263.mixin.MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -42,3 +42,55 @@ subprojects {
         filteringCharset = "UTF-8"
     }
 }
+
+def rangeAdapterSpecs = [
+    ':versions:fabric-1_14': [packageName: 'com.vzoom.range.fabric.legacy.v114', javaVersion: 8, neoforge: false],
+    ':versions:fabric-1_15': [packageName: 'com.vzoom.range.fabric.legacy.v115', javaVersion: 8, neoforge: false],
+    ':versions:fabric-1_16': [packageName: 'com.vzoom.range.fabric.legacy.v116', javaVersion: 8, neoforge: false],
+    ':versions:fabric-1_16_1': [packageName: 'com.vzoom.range.fabric.legacy.v1161', javaVersion: 8, neoforge: false],
+    ':versions:fabric-1_17': [packageName: 'com.vzoom.range.fabric.modern.v117', javaVersion: 16, neoforge: false],
+    ':versions:fabric-1_19': [packageName: 'com.vzoom.range.fabric.modern.v119', javaVersion: 16, neoforge: false],
+    ':versions:fabric-1_19_3': [packageName: 'com.vzoom.range.fabric.modern.v1193', javaVersion: 16, neoforge: false],
+    ':versions:fabric-1_20': [packageName: 'com.vzoom.range.fabric.modern.v120', javaVersion: 16, neoforge: false],
+    ':versions:fabric-1_20_2': [packageName: 'com.vzoom.range.fabric.modern.v1202', javaVersion: 16, neoforge: false],
+    ':versions:fabric-1_21': [packageName: 'com.vzoom.range.fabric.current.v121', javaVersion: 21, neoforge: false],
+    ':versions:fabric-1_21_2': [packageName: 'com.vzoom.range.fabric.current.v1212', javaVersion: 21, neoforge: false],
+    ':versions:fabric-1_21_6': [packageName: 'com.vzoom.range.fabric.current.v1216', javaVersion: 21, neoforge: false],
+    ':versions:fabric-1_21_9': [packageName: 'com.vzoom.range.fabric.current.v1219', javaVersion: 21, neoforge: false],
+    ':versions:fabric-1_21_11': [packageName: 'com.vzoom.range.fabric.current.v12111', javaVersion: 21, neoforge: false],
+    ':versions:fabric-26_1': [packageName: 'com.vzoom.range.fabric.twentysix.v261', javaVersion: 25, neoforge: false],
+    ':versions:fabric-26_2': [packageName: 'com.vzoom.range.fabric.twentysix.v262', javaVersion: 25, neoforge: false],
+    ':versions:fabric-26_3': [packageName: 'com.vzoom.range.fabric.twentysix.v263', javaVersion: 25, neoforge: false],
+    ':versions:neoforge-1_20_5': [packageName: 'com.vzoom.range.neoforge.current.v1205', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-1_21': [packageName: 'com.vzoom.range.neoforge.current.v121', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-1_21_2': [packageName: 'com.vzoom.range.neoforge.current.v1212', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-1_21_6': [packageName: 'com.vzoom.range.neoforge.current.v1216', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-1_21_9': [packageName: 'com.vzoom.range.neoforge.current.v1219', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-1_21_11': [packageName: 'com.vzoom.range.neoforge.current.v12111', javaVersion: 21, neoforge: true],
+    ':versions:neoforge-26_1': [packageName: 'com.vzoom.range.neoforge.twentysix.v261', javaVersion: 25, neoforge: true],
+    ':versions:neoforge-26_2': [packageName: 'com.vzoom.range.neoforge.twentysix.v262', javaVersion: 25, neoforge: true],
+    ':versions:neoforge-26_3': [packageName: 'com.vzoom.range.neoforge.twentysix.v263', javaVersion: 25, neoforge: true]
+]
+
+gradle.afterProject { project, state ->
+    def spec = rangeAdapterSpecs[project.path]
+    if (spec == null || state.failure != null) return
+    def generatedSources = project.file("$project.buildDir/range-source")
+    def relocateSources = project.tasks.register('relocateRangeSources', Sync) {
+        from project.file('src/main/java')
+        into generatedSources
+        exclude 'com/vzoom/client/config/ModMenuIntegration.java'
+        filter { line ->
+            String relocated = line.replace('com.vzoom.client', spec.packageName)
+            if (spec.neoforge && relocated.trim().startsWith('@Mod(')) return ''
+            if (spec.neoforge && relocated.trim().startsWith('@Mod.EventBusSubscriber')) return ''
+            return relocated
+        }
+    }
+    project.sourceSets.main.java.setSrcDirs([generatedSources])
+    project.sourceSets.main.resources.setSrcDirs([])
+    project.tasks.withType(JavaCompile).configureEach {
+        dependsOn relocateSources
+        options.release = spec.javaVersion
+    }
+}

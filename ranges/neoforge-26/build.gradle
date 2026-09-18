@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+ext {
+    rangeArchiveName = 'vzoom-neoforge-26.1-26.3'
+    rangeMinecraft = '26.1'
+    rangeNeoForgeVersion = '26.1.0.8-beta'
+    rangeFmlLoaderVersion = '3.0.45'
+    rangeJavaVersion = 25
+    rangeImodbusStub = null
+    rangeSourceDirectories = ['ranges/common/src/main/java', 'ranges/neoforge-support/src/main/java']
+    rangeAdapterProjects = [[path: ':versions:neoforge-26_1'], [path: ':versions:neoforge-26_2'], [path: ':versions:neoforge-26_3']]
+}
+
+apply from: "$rootDir/ranges/neoforge-range.gradle"

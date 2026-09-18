@@ -1,0 +1,90 @@
+base { archivesName = rangeArchiveName }
+
+loom {
+    mods {
+        "vzoom" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rangeMinecraft}"
+    if (rangeUseRemap) mappings loom.officialMojangMappings()
+    if (rangeUseRemap) {
+        modImplementation "net.fabricmc:fabric-loader:${rangeLoaderVersion}"
+        if (rangeFabricApiVersion != null) modImplementation "net.fabricmc.fabric-api:fabric-api:${rangeFabricApiVersion}"
+        if (rangeModMenuVersion != null) {
+            modCompileOnlyApi("com.terraformersmc:modmenu:${rangeModMenuVersion}") { transitive = false }
+        }
+    } else {
+        implementation "net.fabricmc:fabric-loader:${rangeLoaderVersion}"
+        if (rangeFabricApiVersion != null) implementation "net.fabricmc.fabric-api:fabric-api:${rangeFabricApiVersion}"
+        if (rangeModMenuVersion != null) {
+            compileOnly("com.terraformersmc:modmenu:${rangeModMenuVersion}") { transitive = false }
+        }
+    }
+    implementation project(':core')
+}
+
+sourceSets {
+    main {
+        java.setSrcDirs(rangeSourceDirectories.collect { rootProject.file(it) })
+        resources.setSrcDirs([file('src/main/resources')])
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+    from(rootProject.file("versions/fabric-1_14/src/main/resources/assets"))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:-options" << "-Xlint:-deprecation"
+    options.release = rangeJavaVersion
+}
+
+configurations.configureEach {
+    attributes.attribute(org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, rangeJavaVersion)
+}
+
+jar {
+    dependsOn ':core:classes'
+    archiveClassifier = 'dev'
+    from { project(':core').sourceSets.main.output }
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(rangeJavaVersion)
+    targetCompatibility = JavaVersion.toVersion(rangeJavaVersion)
+}
+
+def sourceJarTask = rangeUseRemap ? tasks.named('remapJar') : tasks.named('jar')
+if (rangeUseRemap) {
+    tasks.named('remapJar') {
+        archiveClassifier = 'base'
+    }
+}
+
+def adapterFiles = rangeAdapterProjects.collect { adapter ->
+    def module = adapter.path.tokenize(':').last()
+    rootProject.file("versions/${module}/build/libs/vzoom-${module}-${project.version}.jar")
+}
+
+tasks.register('rangeJar', Jar) {
+    dependsOn sourceJarTask
+    archiveBaseName = rangeArchiveName
+    archiveClassifier = ''
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { zipTree(sourceJarTask.get().archiveFile.get().asFile) }
+    adapterFiles.each { adapterFile ->
+        from { zipTree(adapterFile) }
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('rangeJar')
+}

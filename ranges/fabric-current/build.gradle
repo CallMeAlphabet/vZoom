@@ -1,0 +1,17 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version '1.17-SNAPSHOT'
+}
+
+ext {
+    rangeArchiveName = 'vzoom-fabric-1.21-1.21.11'
+    rangeMinecraft = '1.21'
+    rangeLoaderVersion = '0.16.14'
+    rangeFabricApiVersion = '0.102.0+1.21'
+    rangeModMenuVersion = '11.0.3'
+    rangeJavaVersion = 21
+    rangeUseRemap = true
+    rangeSourceDirectories = ['ranges/common/src/main/java', 'ranges/fabric-support/src/main/java', 'ranges/fabric-modmenu/src/main/java']
+    rangeAdapterProjects = [[path: ':versions:fabric-1_21', useRemap: true], [path: ':versions:fabric-1_21_2', useRemap: true], [path: ':versions:fabric-1_21_6', useRemap: true], [path: ':versions:fabric-1_21_9', useRemap: true], [path: ':versions:fabric-1_21_11', useRemap: true]]
+}
+
+apply from: "$rootDir/ranges/fabric-range.gradle"

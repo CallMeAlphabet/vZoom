@@ -1,0 +1,90 @@
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.neoforged.net/releases' }
+    maven { url = 'https://libraries.minecraft.net' }
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+File mcJar = null
+def loomCache = new File(gradle.gradleUserHomeDir, 'caches/fabric-loom')
+loomCache.eachFileRecurse { candidate ->
+    if (!candidate.name.startsWith('minecraft-merged') || !candidate.name.endsWith('.jar')) return
+    if (candidate.name.contains('sources') || candidate.name.contains('intermediary')) return
+    if (!candidate.path.contains('minecraftMaven')) return
+    def parent = candidate.parentFile
+    while (parent != null) {
+        if (parent.name == rangeMinecraft || parent.name.startsWith(rangeMinecraft + '-')) {
+            mcJar = candidate
+            return
+        }
+        parent = parent.parentFile
+    }
+}
+if (mcJar == null) throw new GradleException("No Loom merged jar for ${rangeMinecraft}")
+
+dependencies {
+    compileOnly "net.fabricmc:fabric-loader:0.16.14"
+    implementation files(mcJar)
+    implementation "net.neoforged:neoforge:${rangeNeoForgeVersion}:universal"
+    implementation "org.joml:joml:1.10.5"
+    implementation "net.neoforged.fancymodloader:language-java:1.0.16"
+    implementation "net.neoforged.fancymodloader:loader:${rangeFmlLoaderVersion}"
+    implementation "net.neoforged:bus:7.2.0"
+    implementation "net.neoforged:mergetool:2.0.7:api"
+    implementation "net.fabricmc:sponge-mixin:0.15.5+mixin.0.8.7"
+    implementation "com.google.code.gson:gson:2.10.1"
+    implementation "com.mojang:brigadier:1.2.9"
+    implementation "com.mojang:datafixerupper:8.0.16"
+    implementation "com.google.guava:guava:32.1.2-jre"
+    implementation "it.unimi.dsi:fastutil:8.5.12"
+    implementation "org.slf4j:slf4j-api:2.0.9"
+    if (rangeImodbusStub != null) implementation files(rootProject.file(rangeImodbusStub))
+    implementation project(':core')
+}
+
+sourceSets {
+    main {
+        java.setSrcDirs(rangeSourceDirectories.collect { rootProject.file(it) })
+        resources.setSrcDirs([file('src/main/resources')])
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("*.toml") { expand "version": project.version }
+    from(rootProject.file("versions/neoforge-1_20_2/src/main/resources/assets"))
+    from(rootProject.file("versions/neoforge-1_20_2/src/main/resources/logo.png"))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:-options" << "-Xlint:-deprecation"
+    options.release = rangeJavaVersion
+}
+
+jar {
+    dependsOn ':core:classes'
+    archiveClassifier = 'dev'
+    from { project(':core').sourceSets.main.output }
+}
+
+def adapterFiles = rangeAdapterProjects.collect { adapter ->
+    def module = adapter.path.tokenize(':').last()
+    rootProject.file("versions/${module}/build/libs/vzoom-${module}-${project.version}.jar")
+}
+
+tasks.register('rangeJar', Jar) {
+    dependsOn tasks.named('jar')
+    archiveBaseName = rangeArchiveName
+    archiveClassifier = ''
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { zipTree(tasks.named('jar').get().archiveFile.get().asFile) }
+    adapterFiles.each { adapterFile ->
+        from { zipTree(adapterFile) }
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('rangeJar')
+}

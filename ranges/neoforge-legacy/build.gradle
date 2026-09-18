@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+ext {
+    rangeArchiveName = 'vzoom-neoforge-1.20.2-1.20.4'
+    rangeMinecraft = '1.20.2'
+    rangeNeoForgeVersion = '20.2.93'
+    rangeFmlLoaderVersion = '1.0.16'
+    rangeJavaVersion = 17
+    rangeImodbusStub = 'versions/neoforge-1_20_2/libs/vzoom-imodbus-event-stub.jar'
+    rangeSourceDirectories = ['versions/neoforge-1_20_2/src/main/java']
+    rangeAdapterProjects = []
+}
+
+apply from: "$rootDir/ranges/neoforge-range.gradle"
