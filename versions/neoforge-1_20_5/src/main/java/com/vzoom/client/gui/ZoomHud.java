@@ -81,13 +81,10 @@ public final class ZoomHud {
             lines.add(t == null ? "\u2014" : t);
         }
 
-        boolean wantsBar = s.config.hudStyle == HudStyle.BAR;
-        int barH = wantsBar ? (4 + PAD) : 0;
-
         int textW = 0;
         for (String l : lines) textW = Math.max(textW, font.width(l));
         int rawW = textW + PAD * 2;
-        int rawH = lines.size() * font.lineHeight + PAD * 2 + barH;
+        int rawH = lines.size() * font.lineHeight + PAD * 2;
 
         int sw = rawW * scale;
         int sh = rawH * scale;
@@ -122,13 +119,6 @@ public final class ZoomHud {
             g.drawString(font, lines.get(i), PAD, PAD + i * font.lineHeight, color, true);
         }
 
-        if (wantsBar) {
-            int barY = PAD + lines.size() * font.lineHeight + PAD;
-            int barFullW = rawW - PAD * 2;
-            g.fill(PAD, barY, PAD + barFullW, barY + 3, 0x55000000);
-            int fillW = (int) Math.round(barFullW * s.getZoomBarProgress());
-            g.fill(PAD, barY, PAD + fillW, barY + 3, s.config.hudColor);
-        }
 
         pose.popPose();
     }

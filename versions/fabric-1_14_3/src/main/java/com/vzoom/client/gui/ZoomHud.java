@@ -89,13 +89,10 @@ public final class ZoomHud {
             lines.add(t == null ? "\u2014" : t);
         }
 
-        boolean wantsBar = s.config.hudStyle == HudStyle.BAR;
-        int barH = wantsBar ? (4 + PAD) : 0;
-
         int textW = 0;
         for (String l : lines) textW = Math.max(textW, font.width(l));
         int rawW = textW + PAD * 2 + 4;
-        int rawH = lines.size() * font.lineHeight + PAD * 2 + barH;
+        int rawH = lines.size() * font.lineHeight + PAD * 2;
 
         int sw = rawW * scale;
         int sh = rawH * scale;
@@ -128,13 +125,6 @@ public final class ZoomHud {
             font.drawShadow(lines.get(i), PAD + 2, y + 2 + i * font.lineHeight, color);
         }
 
-        if (wantsBar) {
-            int barY = y + 2 + lines.size() * font.lineHeight + PAD;
-            int barFullW = rawW - PAD * 2;
-            net.minecraft.client.gui.GuiComponent.fill(x + PAD, barY, x + PAD + barFullW, barY + 3, 0x55000000);
-            int fillW = (int) Math.round(barFullW * s.getZoomBarProgress());
-            net.minecraft.client.gui.GuiComponent.fill(x + PAD, barY, x + PAD + fillW, barY + 3, s.config.hudColor);
-        }
 
         GlStateManager.popMatrix();
     }

@@ -25,8 +25,6 @@ public enum HudStyle {
     TEXT,
     /** Percentage text ({@code 450%}). */
     PERCENT,
-    /** Both multiplier and a horizontal progress bar beneath it. */
-    BAR,
     /** Multiplier plus distance / target info (when enabled). */
     COMPACT,
     /** Nothing — hides the indicator entirely (overlays still render). */
