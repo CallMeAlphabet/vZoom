@@ -41,7 +41,7 @@
   "vzoom.config.showFps": "Show FPS",
   "vzoom.config.showCoords": "Show Target Coordinates",
   "vzoom.config.showDirection": "Show Facing",
-  "vzoom.config.showTarget": "Show Target Info",
+  "vzoom.config.showTarget": "Show Entity Info",
   "vzoom.config.hudOffsetX": "HUD Offset X",
   "vzoom.config.hudOffsetY": "HUD Offset Y",
   "vzoom.config.disableSprint": "Disable While Sprinting",

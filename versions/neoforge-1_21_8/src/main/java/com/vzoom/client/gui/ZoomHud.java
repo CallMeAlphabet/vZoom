@@ -24,10 +24,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,7 +128,17 @@ public final class ZoomHud {
         Entity cam = mc.getCameraEntity();
         if (cam == null || mc.level == null) return null;
         double dist = Math.min(256.0, 11.0 + s.getCurrentZoom() * 5.0);
-        return cam.pick(dist, 0.0F, false);
+        Vec3 start = cam.getEyePosition(1.0F);
+        Vec3 direction = cam.getViewVector(1.0F).scale(dist);
+        Vec3 end = start.add(direction);
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                cam, start, end, cam.getBoundingBox().expandTowards(direction).inflate(1.0D),
+                entity -> !entity.isSpectator() && entity.isPickable(), dist);
+        HitResult blockHit = cam.pick(dist, 0.0F, false);
+        if (entityHit == null) return blockHit;
+        if (blockHit.getType() != HitResult.Type.MISS
+                && start.distanceToSqr(blockHit.getLocation()) < start.distanceToSqr(entityHit.getLocation())) return blockHit;
+        return entityHit;
     }
 
     private static String coordLine(Minecraft mc, HitResult hit) {
@@ -151,25 +162,17 @@ public final class ZoomHud {
     }
 
     private static String targetLine(Minecraft mc, HitResult hit) {
-        if (hit == null || hit.getType() == HitResult.Type.MISS) return null;
+        if (!(hit instanceof EntityHitResult)) return null;
         Entity cam = mc.getCameraEntity();
         if (cam == null) return null;
         double d = cam.getEyePosition(1.0F).distanceTo(hit.getLocation());
-        if (hit.getType() == HitResult.Type.ENTITY && hit instanceof EntityHitResult) {
-            Entity e = ((EntityHitResult) hit).getEntity();
-            String name = e.getDisplayName().getString();
-            if (e instanceof LivingEntity) {
-                LivingEntity living = (LivingEntity) e;
-                return name + String.format(" \u00b7 %.1f/%.0f HP",
-                        living.getHealth(), living.getMaxHealth()) + " (" + fmtDist(d) + ")";
-            }
-            return name + " (" + fmtDist(d) + ")";
-        } else if (hit.getType() == HitResult.Type.BLOCK && hit instanceof BlockHitResult) {
-            BlockPos bp = ((BlockHitResult) hit).getBlockPos();
-            BlockState state = mc.level.getBlockState(bp);
-            return state.getBlock().getName().getString() + " (" + fmtDist(d) + ")";
+        Entity e = ((EntityHitResult) hit).getEntity();
+        String name = e.getDisplayName().getString();
+        if (e instanceof LivingEntity) {
+            LivingEntity living = (LivingEntity) e;
+            return name + String.format(" \u00b7 %.1f/%.0f HP", living.getHealth(), living.getMaxHealth()) + " (" + fmtDist(d) + ")";
         }
-        return null;
+        return name + " (" + fmtDist(d) + ")";
     }
 
     private static String fmtDist(double d) {

@@ -134,7 +134,7 @@ public final class ZoomConfig {
     // HUD info lines
     // ------------------------------------------------------------------
 
-    public boolean showTargetInfo = false;   // block / entity name + distance
+    public boolean showTargetInfo = false;
     public boolean showCoordinates = false;  // looked-at block coordinates
     public boolean showFps = false;          // fps counter
     public boolean showDirection = false;    // facing yaw heading

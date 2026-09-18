@@ -20,11 +20,12 @@ import com.vzoom.core.ZoomState;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,7 +134,17 @@ public final class ZoomHud {
         Entity cam = mc.getCameraEntity();
         if (cam == null || mc.level == null) return null;
         double dist = Math.min(256.0, 11.0 + s.getCurrentZoom() * 5.0);
-        return cam.pick(dist, 0.0F, false);
+        Vec3 start = cam.getEyePosition(1.0F);
+        Vec3 direction = cam.getViewVector(1.0F).scale(dist);
+        Vec3 end = start.add(direction);
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                cam, start, end, cam.getBoundingBox().expandTowards(direction).inflate(1.0D),
+                entity -> !entity.isSpectator() && entity.isPickable(), dist);
+        HitResult blockHit = cam.pick(dist, 0.0F, false);
+        if (entityHit == null) return blockHit;
+        if (blockHit.getType() != HitResult.Type.MISS
+                && start.distanceToSqr(blockHit.getLocation()) < start.distanceToSqr(entityHit.getLocation())) return blockHit;
+        return entityHit;
     }
 
     private static String coordLine(net.minecraft.client.Minecraft mc, HitResult hit) {
@@ -157,21 +168,13 @@ public final class ZoomHud {
     }
 
     private static String targetLine(net.minecraft.client.Minecraft mc, HitResult hit) {
-        if (hit == null || hit.getType() == HitResult.Type.MISS) return null;
-        if (hit instanceof EntityHitResult) {
-            Entity e = ((EntityHitResult) hit).getEntity();
-            String name = e.getName().getString();
-            if (e instanceof net.minecraft.world.entity.LivingEntity) {
-                net.minecraft.world.entity.LivingEntity living = (net.minecraft.world.entity.LivingEntity) e;
-                return name + String.format(" · %.1f/%.0f HP", living.getHealth(), living.getMaxHealth());
-            }
-            return name;
+        if (!(hit instanceof EntityHitResult)) return null;
+        Entity e = ((EntityHitResult) hit).getEntity();
+        String name = e.getName().getString();
+        if (e instanceof net.minecraft.world.entity.LivingEntity) {
+            net.minecraft.world.entity.LivingEntity living = (net.minecraft.world.entity.LivingEntity) e;
+            return name + String.format(" · %.1f/%.0f HP", living.getHealth(), living.getMaxHealth());
         }
-        if (hit instanceof BlockHitResult) {
-            BlockPos bp = ((BlockHitResult) hit).getBlockPos();
-            BlockState st = mc.level.getBlockState(bp);
-            return st.getBlock().getName().getString() + String.format(" (%d, %d, %d)", bp.getX(), bp.getY(), bp.getZ());
-        }
-        return null;
+        return name;
     }
 }
