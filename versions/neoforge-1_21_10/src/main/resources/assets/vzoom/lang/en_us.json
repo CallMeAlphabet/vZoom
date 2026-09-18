@@ -15,6 +15,7 @@
   "vzoom.section.autoDisable": "-- Auto-Disable --",
   "vzoom.config.hud": "Zoom HUD",
   "vzoom.config.cinematic": "Cinematic Camera",
+  "vzoom.config.cinematicSens": "Cinematic Sensitivity",
   "vzoom.config.retain": "Retain Zoom on Release",
   "vzoom.config.activation": "Activation Mode",
   "vzoom.config.doubleTap": "Double-Tap Window (ms)",
