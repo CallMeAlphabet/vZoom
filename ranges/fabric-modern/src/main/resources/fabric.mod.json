@@ -24,7 +24,11 @@
     ]
   },
   "mixins": [
-    "vzoom.mixins.json"
+    "vzoom-v117.mixins.json",
+    "vzoom-v119.mixins.json",
+    "vzoom-v1193.mixins.json",
+    "vzoom-v120.mixins.json",
+    "vzoom-v1202.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.0",

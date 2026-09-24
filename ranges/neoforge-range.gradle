@@ -52,7 +52,7 @@ sourceSets {
 processResources {
     inputs.property "version", project.version
     filesMatching("*.toml") { expand "version": project.version }
-    from(rootProject.file("versions/neoforge-1_20_2/src/main/resources/assets"))
+    from(rootProject.file("versions/neoforge-1_20_2/src/main/resources/assets")) { into 'assets' }
     from(rootProject.file("versions/neoforge-1_20_2/src/main/resources/logo.png"))
 }
 

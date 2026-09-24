@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.vzoom.range.fabric.modern.v1202.mixin",
+  "plugin": "com.vzoom.range.FabricRangeMixinPlugin",
+  "compatibilityLevel": "JAVA_16",
+  "client": [
+    "GameRendererMixin",
+    "MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

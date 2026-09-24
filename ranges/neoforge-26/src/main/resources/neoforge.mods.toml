@@ -13,7 +13,13 @@ logoFile="logo.png"
 description='''Infinite, smooth cinematic zoom. Hold the zoom key (default C) and scroll the mouse wheel to adjust the zoom depth with no fixed limits.'''
 
 [[mixins]]
-config="vzoom.mixins.json"
+config="vzoom-v261.mixins.json"
+
+[[mixins]]
+config="vzoom-v262.mixins.json"
+
+[[mixins]]
+config="vzoom-v263.mixins.json"
 
 [[dependencies.vzoom]]
 modId="neoforge"

@@ -120,7 +120,7 @@ jobs:
                       metadata = [name for name in names if name in {'mods.toml', 'neoforge.mods.toml'}]
                       if len(metadata) != 1:
                           raise SystemExit(f'invalid NeoForge metadata in {path.name}')
-                  if 'vzoom.mixins.json' not in names or 'vzoom-range.properties' not in names and target['id'] != 'neoforge-1.20.2-1.20.4':
+                  if not any(name.startswith('vzoom') and name.endswith('.mixins.json') for name in names) or 'vzoom-range.properties' not in names and target['id'] != 'neoforge-1.20.2-1.20.4':
                       raise SystemExit(f'incomplete range jar {path.name}')
           PY
       - uses: actions/upload-artifact@v4

@@ -37,7 +37,7 @@ sourceSets {
 processResources {
     inputs.property "version", project.version
     filesMatching("fabric.mod.json") { expand "version": project.version }
-    from(rootProject.file("versions/fabric-1_14/src/main/resources/assets"))
+    from(rootProject.file("versions/fabric-1_14/src/main/resources/assets")) { into 'assets' }
 }
 
 tasks.withType(JavaCompile).configureEach {
