@@ -126,7 +126,6 @@ public final class ZoomState {
 
         if (active && !wasActive) {
             targetZoom = Math.max(Math.max(targetZoom, getEffectiveDefaultZoom()), config.minZoom);
-            currentZoom = targetZoom;
         } else if (!active && wasActive && !config.retainZoomOnRelease) {
             targetZoom = 1.0;
         }

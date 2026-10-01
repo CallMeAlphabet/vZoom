@@ -68,20 +68,21 @@ jar {
     from { project(':core').sourceSets.main.output }
 }
 
-def adapterFiles = rangeAdapterProjects.collect { adapter ->
-    def module = adapter.path.tokenize(':').last()
-    rootProject.file("versions/${module}/build/libs/vzoom-${module}-${project.version}.jar")
+def adapterJarTasks = rangeAdapterProjects.collect { adapter ->
+    evaluationDependsOn(adapter.path)
+    rootProject.project(adapter.path).tasks.named('jar')
 }
 
 tasks.register('rangeJar', Jar) {
     dependsOn tasks.named('jar')
+    dependsOn adapterJarTasks
     archiveBaseName = rangeArchiveName
     archiveClassifier = ''
     destinationDirectory = layout.buildDirectory.dir('libs')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { zipTree(tasks.named('jar').get().archiveFile.get().asFile) }
-    adapterFiles.each { adapterFile ->
-        from { zipTree(adapterFile) }
+    adapterJarTasks.each { adapterJarTask ->
+        from { zipTree(adapterJarTask.get().archiveFile.get().asFile) }
     }
 }
 

@@ -11,6 +11,14 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
 }
 
+def runnerJavaVersion = org.gradle.api.JavaVersion.current()
+if (runnerJavaVersion < org.gradle.api.JavaVersion.VERSION_17 || runnerJavaVersion > org.gradle.api.JavaVersion.toVersion(27)) {
+    throw new GradleException(
+        "Gradle 9.8.0 must be launched with JDK 17-27 (detected ${runnerJavaVersion}). " +
+        "Set JAVA_HOME to a supported JDK before running ./gradlew, e.g.: JAVA_HOME=/path/to/jdk-21 ./gradlew build"
+    )
+}
+
 rootProject.name = "vZoom"
 
 include(":core")
